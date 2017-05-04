@@ -150,7 +150,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>20.0-hal</version>
+            <version>21.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
