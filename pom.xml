@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.dzieciou.testing</groupId>
     <artifactId>curl-logger</artifactId>
-    <version>0.5</version>
+    <version>0.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/dzieciou/curl-logger</url>
     <name>com.dzieciou.testing:curl-logger</name>
@@ -150,7 +150,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>20.0-hal</version>
+            <version>21.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
