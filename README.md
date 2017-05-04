@@ -158,8 +158,8 @@ By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prin
 * Upgraded to REST-assured 3.0.1 that contains important fix impacting curl-logger: Cookie attributes are no longer sent in request in accordance with RFC6265. 
 * Fixed bug: cookie values can have = sign inside so we need to get around them somehow
 * Cookie strings are now escaped
-* CurlLoggingInterceptor's constructor is now protected to make extending it possible 
-* CurlLoggingInterceptor can now be configured to print a curl command in multiple lines
+* `CurlLoggingInterceptor`'s constructor is now protected to make extending it possible 
+* `CurlLoggingInterceptor` can now be configured to print a curl command in multiple lines
  
 
 0.4:
