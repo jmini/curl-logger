@@ -85,7 +85,7 @@ new CurlLoggingRestAssuredConfigBuilder()
 
 ### Logging attached files
 
-When you attach a file to your requests
+When you attach a file to your requests, e.g., sending content of "README.md" file:
 
 ```java
 given()
