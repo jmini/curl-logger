@@ -144,14 +144,15 @@ By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prin
 <dependency>
     <groupId>io.restassured</groupId>
     <artifactId>rest-assured</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.2</version>
 </dependency>
 ```
 
 ## Releases
 
 0.6:
-* Simplifies curl-logger configuration with `CurlLoggingRestAssuredConfigBuilder`, based on suggestion from Tao Zhang (https://github.com/dzieciou/curl-logger/issues/4)
+* Upgraded to REST-assured 3.0.2
+* Simplified curl-logger configuration with `CurlLoggingRestAssuredConfigBuilder`, based on suggestion from Tao Zhang (https://github.com/dzieciou/curl-logger/issues/4)
 
 0.5:
 
