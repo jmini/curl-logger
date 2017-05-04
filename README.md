@@ -5,6 +5,7 @@ Logs each HTTP request sent by REST-assured as a [CURL][1] command.
 The following request from REST-assured test
 ```java  
 given()
+  .config(config)
   .redirects().follow(false)
 .when()
   .get("http://google.com")
@@ -26,37 +27,31 @@ Latest release:
 <dependency>
   <groupId>com.github.dzieciou.testing</groupId>
   <artifactId>curl-logger</artifactId>
-  <version>0.5</version>
+  <version>0.6-SNAPSHOT</version>
 </dependency>
 ```
    
 ### Using with REST-assured client 
     
-When creating HTTP client instance, you must configure it to use `CurlLoggingInterceptor`:
-    
+When sending HTTP Request with REST-assured, you must configure it first as follows:
+        
 ```java
-private static class MyHttpClientFactory implements HttpClientConfig.HttpClientFactory {
-  @Override
-  public HttpClient createHttpClient() {
-    AbstractHttpClient client = new DefaultHttpClient();
-    client.addRequestInterceptor(CurlLoggingInterceptor.defaultBuilder().build());
-    return client;
-  }
-}
+RestAssuredConfig config = new CurlLoggingRestAssuredConfigBuilder().build();  
+```
+  
+and then use it:
 
-private static RestAssuredConfig restAssuredConfig() {
-  return config()
-          .httpClient(httpClientConfig()
-            .reuseHttpClientInstance().httpClientFactory(new MyHttpClientFactory()));
-}
-
-```   
- 
-and use it in the test:
-```java  
+```java
 given()
-  .config(restAssuredConfig())
-...
+  .config(config)
+  ...
+```
+
+If you already have a `RestAssuredConfig` instance, you may reconfigure it as follows:
+
+```java
+RestAssuredConfig config = ...;
+config = new CurlLoggingRestAssuredConfigBuilder(config).build();  
 ```
 
 CURL commands are logged to a "curl" logger. The library requires only the logger to be [slf4j][4]-compliant, e.g.,
@@ -80,11 +75,12 @@ using [logback][5]. Sample logback configuration that logs all CURL commands to 
 ### Logging stacktrace
 
 If your test is sending multiple requests it might be hard to understand which REST-assured request generated a given 
-curl command. The library provides a way to log stacktrace where the curl generation was requested. You configure 
-`CurlLoggingInterceptor` accordingly:
+curl command. The library provides a way to log stacktrace where the curl generation was requested:
 
-```java
-CurlLoggingInterceptor.defaultBuilder().logStacktrace().build();
+```java  
+new CurlLoggingRestAssuredConfigBuilder()
+  .logStacktrace()
+  .build()
 ```
 
 ### Logging attached files
@@ -93,7 +89,7 @@ When you attach a file to your requests
 
 ```java
 given()
-  .config(restAssuredConfig())
+  .config(new CurlLoggingRestAssuredConfigBuilder().build())
   .baseUri("http://someHost.com")
   .multiPart("myfile", new File("README.md"), "application/json")
 .when()
@@ -127,9 +123,12 @@ curl 'http://google.pl/' ^
 ```
 To achieve this configure your `CurlLoggingInterceptor` as follows:
 ```java
-CurlLoggingInterceptor.defaultBuilder().printMultiliner().build();
+new CurlLoggingRestAssuredConfigBuilder()
+  .printMultiliner()
+  .build()
 ```
-By default `CurlLoggingInterceptor` prints curl command in a single line.
+
+By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prints curl command in a single line.
 
 ## Prerequisities
 
@@ -150,6 +149,9 @@ By default `CurlLoggingInterceptor` prints curl command in a single line.
 ```
 
 ## Releases
+
+0.6:
+* Simplifies curl-logger configuration with `CurlLoggingRestAssuredConfigBuilder`, based on suggestion from Tao Zhang (https://github.com/dzieciou/curl-logger/issues/4)
 
 0.5:
 
