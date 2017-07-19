@@ -36,14 +36,14 @@ public class Http2CurlTest {
 
     @Test
     public void shouldPrintPostRequestProperly() throws Exception {
-        HttpPost posttRequest = new HttpPost("http://google.pl/");
+        HttpPost postRequest = new HttpPost("http://google.pl/");
         List<NameValuePair> postParameters = new ArrayList<>();
         postParameters.add(new BasicNameValuePair("param1", "param1_value"));
         postParameters.add(new BasicNameValuePair("param2", "param2_value"));
 
-        posttRequest.setEntity(new UrlEncodedFormEntity(postParameters));
-        posttRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
-        assertThat(Http2Curl.generateCurl(posttRequest),
+        postRequest.setEntity(new UrlEncodedFormEntity(postParameters));
+        postRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        assertThat(Http2Curl.generateCurl(postRequest),
                 equalTo("curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' --data 'param1=param1_value&param2=param2_value' --compressed --insecure --verbose"));
     }
 
@@ -59,6 +59,14 @@ public class Http2CurlTest {
         HttpHead headRequest = new HttpHead("http://test.com/items/12345");
         assertThat(Http2Curl.generateCurl(headRequest),
                 equalTo("curl 'http://test.com/items/12345' -X HEAD --compressed --insecure --verbose"));
+    }
+
+    @Test
+    public void shouldPrintMultipleCookiesInOneParameter() throws Exception {
+        HttpHead headRequest = new HttpHead("http://test.com/items/12345");
+        headRequest.setHeader("Cookie", "X=Y; A=B");
+        assertThat(Http2Curl.generateCurl(headRequest),
+                equalTo("curl 'http://test.com/items/12345' -X HEAD -b 'X=Y; A=B' --compressed --insecure --verbose"));
     }
 
     @Test
