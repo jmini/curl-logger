@@ -207,22 +207,21 @@ public class Http2Curl {
         List<Header> cookiesHeaders = headers.stream()
                 .filter(h -> h.getName().equals("Cookie"))
                 .collect(Collectors.toList());
-        cookiesHeaders.forEach(h -> handleCookiesHeader(h, command));
+
+        if (cookiesHeaders.size() > 1) {
+            // RFC 6265: When the user agent generates an HTTP request, the user agent MUST NOT attach
+            // more than one Cookie header field.
+            throw new IllegalStateException("More than one Cookie header in HTTP Request not allowed");
+        }
+
+        if (cookiesHeaders.size() == 1) {
+            command.add(line(
+                    "-b",
+                    escapeString(cookiesHeaders.get(0).getValue())));
+        }
+
         headers = headers.stream().filter(h -> !h.getName().equals("Cookie")).collect(Collectors.toList());
         return headers;
-    }
-
-    private static void handleCookiesHeader(Header header, List<List<String>> command) {
-        List<String> cookies = Arrays.asList(header.getValue().split("; "));
-        cookies.forEach(c -> handleCookie(c.trim(), command));
-    }
-
-    private static void handleCookie(String cookie, List<List<String>> command) {
-        // Cookie value may contain "=" as well
-        String[] nameAndValue = cookie.split("=", 2);
-        command.add(line(
-                "-b",
-                escapeString(String.format("%s=%s", nameAndValue[0], nameAndValue[1]))));
     }
 
     private static void handleMultipartEntity(HttpEntity entity, List<List<String>> command) throws NoSuchFieldException, IllegalAccessException, IOException {
