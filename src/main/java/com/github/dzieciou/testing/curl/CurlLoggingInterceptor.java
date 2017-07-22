@@ -1,5 +1,8 @@
 package com.github.dzieciou.testing.curl;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -15,13 +18,14 @@ import java.io.IOException;
  */
 public class CurlLoggingInterceptor implements HttpRequestInterceptor {
 
-    private final boolean logStacktrace;
-    private final boolean printMultiliner;
-    private Logger log = LoggerFactory.getLogger("curl");
+    private static final Logger log = LoggerFactory.getLogger("curl");
 
-    protected CurlLoggingInterceptor(Builder b) {
-        this.logStacktrace = b.logStacktrace;
-        this.printMultiliner = b.printMultiliner;
+    private Set<String> headersToIgnore = new HashSet<>();
+    private boolean logStacktrace = false;
+    private boolean printMultiliner = false;
+
+    private CurlLoggingInterceptor() {
+
     }
 
     public static Builder defaultBuilder() {
@@ -38,7 +42,7 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
     @Override
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
         try {
-            String curl = Http2Curl.generateCurl(request, printMultiliner);
+            String curl = Http2Curl.generateCurl(request, printMultiliner, Collections.unmodifiableSet(headersToIgnore));
             StringBuffer message = new StringBuffer(curl);
             if (logStacktrace) {
                 message.append(String.format("%n\tgenerated%n"));
@@ -52,14 +56,13 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
 
     public static class Builder {
 
-        private boolean logStacktrace = false;
-        private boolean printMultiliner = false;
+        private final CurlLoggingInterceptor interceptor = new CurlLoggingInterceptor();
 
         /**
          * Configures {@code CurlLoggingInterceptor} to print a stacktrace where curl command has been generated.
          */
         public Builder logStacktrace() {
-            logStacktrace = true;
+            interceptor.logStacktrace = true;
             return this;
         }
 
@@ -67,7 +70,7 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
          * Configures {@code CurlLoggingInterceptor} to not print a stacktrace where curl command has been generated.
          */
         public Builder dontLogStacktrace() {
-            logStacktrace = false;
+            interceptor.logStacktrace = false;
             return this;
         }
 
@@ -75,7 +78,7 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
          * Configures {@code CurlLoggingInterceptor} to print a curl command in multiple lines.
          */
         public Builder printMultiliner() {
-            printMultiliner = true;
+            interceptor.printMultiliner = true;
             return this;
         }
 
@@ -83,12 +86,17 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
          * Configures {@code CurlLoggingInterceptor} to print a curl command in a single line.
          */
         public Builder printSingleliner() {
-            printMultiliner = false;
+            interceptor.printMultiliner = false;
+            return this;
+        }
+
+        public Builder ignoreHeader(String headerName) {
+            interceptor.headersToIgnore.add(headerName);
             return this;
         }
 
         public CurlLoggingInterceptor build() {
-            return new CurlLoggingInterceptor(this);
+            return interceptor;
         }
 
     }

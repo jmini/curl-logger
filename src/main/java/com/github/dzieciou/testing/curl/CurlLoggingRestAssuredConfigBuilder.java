@@ -1,6 +1,8 @@
 package com.github.dzieciou.testing.curl;
 
 
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -16,6 +18,7 @@ public class CurlLoggingRestAssuredConfigBuilder {
 
     private final CurlLoggingInterceptor.Builder interceptorBuilder;
     private final RestAssuredConfig config;
+
 
     public CurlLoggingRestAssuredConfigBuilder(RestAssuredConfig config) {
         this.config = config;

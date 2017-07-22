@@ -160,6 +160,27 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExcludes>ch.qos.logback:logback-classic
+                        </classpathDependencyExcludes>
+                    </classpathDependencyExcludes>
+                    <systemProperties>
+                        <property>
+                            <name>os.name</name>
+                            <value>linux</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
         <profile>
             <id>release</id>
@@ -215,15 +236,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <classpathDependencyExcludes>
-                                <classpathDependencyExcludes>ch.qos.logback:logback-classic
-                                </classpathDependencyExcludes>
-                            </classpathDependencyExcludes>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

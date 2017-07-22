@@ -1,6 +1,7 @@
 package com.github.dzieciou.testing.curl;
 
 
+import java.util.HashSet;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
@@ -80,16 +81,19 @@ public class Http2CurlTest {
 
     @Test
     public void shouldPrintMultilineRequestProperly() throws Exception {
-        HttpPost posttRequest = new HttpPost("http://google.pl/");
+        HttpPost postRequest = new HttpPost("http://google.pl/");
         List<NameValuePair> postParameters = new ArrayList<>();
         postParameters.add(new BasicNameValuePair("param1", "param1_value"));
         postParameters.add(new BasicNameValuePair("param2", "param2_value"));
 
-        posttRequest.setEntity(new UrlEncodedFormEntity(postParameters));
-        posttRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        postRequest.setEntity(new UrlEncodedFormEntity(postParameters));
+        postRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
-        assertThat(Http2Curl.generateCurl(posttRequest, true),
-                equalTo("curl 'http://google.pl/' \\\n  -H 'Content-Type: application/x-www-form-urlencoded' \\\n  --data 'param1=param1_value&param2=param2_value' \\\n  --compressed \\\n  --insecure \\\n  --verbose"));
+        assertThat(Http2Curl.generateCurl(postRequest, true, new HashSet<>()),
+                equalTo(osIndepenent("curl 'http://google.pl/' \\\n  -H 'Content-Type: application/x-www-form-urlencoded' \\\n  --data 'param1=param1_value&param2=param2_value' \\\n  --compressed \\\n  --insecure \\\n  --verbose")));
     }
 
+    private static String osIndepenent(String s) {
+        return s.replace("\n", System.lineSeparator());
+    }
 }

@@ -76,7 +76,7 @@ public class Http2Curl {
      * @throws Exception if failed to generate CURL command
      */
     public static String generateCurl(HttpRequest request) throws Exception {
-        return generateCurl(request, false);
+        return generateCurl(request, false, new HashSet<>());
     }
 
     /**
@@ -84,13 +84,16 @@ public class Http2Curl {
      *
      * @param request HTTP request
      * @param printMultiliner if {@code true} breaks command into lines for better legibility
+     * @param headersToIgnore
      * @return CURL command
      * @throws Exception if failed to generate CURL command
      */
-    public static String generateCurl(HttpRequest request, boolean printMultiliner) throws Exception {
+    public static String generateCurl(HttpRequest request,
+        boolean printMultiliner,
+        Set<String> headersToIgnore) throws Exception {
 
         List<List<String>> command = new ArrayList<>();  // Multi-line command
-        Set<String> ignoredHeaders = new HashSet<>();
+        Set<String> ignoredHeaders = new HashSet<>(headersToIgnore);
         List<Header> headers = Arrays.asList(request.getAllHeaders());
 
         String inferredUri = request.getRequestLine().getUri();
