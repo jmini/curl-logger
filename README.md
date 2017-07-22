@@ -1,6 +1,6 @@
 # CURL Logger
 
-[![Build Status](https://travis-ci.org/dzieciou/curl-logger.svg?branch=master)](https://travis-ci.org/dzieciou/curl-logger.svg?branch=master)
+[![Build Status](https://travis-ci.org/dzieciou/curl-logger.svg?branch=master)](https://travis-ci.org/dzieciou/curl-logger/)
 
 Logs each HTTP request sent by REST-assured as a [CURL][1] command.
 
