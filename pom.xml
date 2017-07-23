@@ -170,12 +170,6 @@
                         <classpathDependencyExcludes>ch.qos.logback:logback-classic
                         </classpathDependencyExcludes>
                     </classpathDependencyExcludes>
-                    <systemProperties>
-                        <property>
-                            <name>os.name</name>
-                            <value>linux</value>
-                        </property>
-                    </systemProperties>
                 </configuration>
             </plugin>
         </plugins>

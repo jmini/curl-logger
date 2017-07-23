@@ -53,7 +53,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 
@@ -68,6 +67,20 @@ public class Http2Curl {
             "application/x-www-form-urlencoded",
             "application/json"});
 
+
+    private final OsChecker osChecker;
+
+    public Http2Curl() {
+        this(new OsChecker());
+    }
+
+    /**
+     * For tests only
+     */
+    Http2Curl(OsChecker osChecker) {
+      this.osChecker = osChecker;
+    }
+
     /**
      * Generates single-line CURL command for a given HTTP request.
      *
@@ -75,7 +88,7 @@ public class Http2Curl {
      * @return CURL command
      * @throws Exception if failed to generate CURL command
      */
-    public static String generateCurl(HttpRequest request) throws Exception {
+    public String generateCurl(HttpRequest request) throws Exception {
         return generateCurl(request, false, new HashSet<>());
     }
 
@@ -88,7 +101,7 @@ public class Http2Curl {
      * @return CURL command
      * @throws Exception if failed to generate CURL command
      */
-    public static String generateCurl(HttpRequest request,
+    public String generateCurl(HttpRequest request,
         boolean printMultiliner,
         Set<String> headersToIgnore) throws Exception {
 
@@ -192,21 +205,21 @@ public class Http2Curl {
                 .collect(Collectors.joining(chooseJoiningString(printMultiliner)));
     }
 
-    private static CharSequence chooseJoiningString(boolean printMultiliner) {
+    private CharSequence chooseJoiningString(boolean printMultiliner) {
         return printMultiliner
-                ? String.format(" %s%n  ", commandLineSeparator())
+                ? String.format(" %s%s  ", commandLineSeparator(), osChecker.lineSeparator())
                 : " ";
     }
 
-    private static String commandLineSeparator() {
-        return isOsWindows() ? "^" : "\\";
+    private String commandLineSeparator() {
+        return osChecker.isOsWindows() ? "^" : "\\";
     }
 
     private static List<String> line(String... arguments) {
         return Arrays.asList(arguments);
     }
 
-    private static List<Header> handleCookieHeaders(List<List<String>> command, List<Header> headers) {
+    private List<Header> handleCookieHeaders(List<List<String>> command, List<Header> headers) {
         List<Header> cookiesHeaders = headers.stream()
                 .filter(h -> h.getName().equals("Cookie"))
                 .collect(Collectors.toList());
@@ -227,7 +240,7 @@ public class Http2Curl {
         return headers;
     }
 
-    private static void handleMultipartEntity(HttpEntity entity, List<List<String>> command) throws NoSuchFieldException, IllegalAccessException, IOException {
+    private void handleMultipartEntity(HttpEntity entity, List<List<String>> command) throws NoSuchFieldException, IllegalAccessException, IOException {
         HttpEntity wrappedEntity = (HttpEntity) getFieldValue(entity, "wrappedEntity");
         RestAssuredMultiPartEntity multiPartEntity = (RestAssuredMultiPartEntity) wrappedEntity;
         MultipartEntityBuilder multipartEntityBuilder = (MultipartEntityBuilder) getFieldValue(multiPartEntity, "builder");
@@ -237,7 +250,7 @@ public class Http2Curl {
         bodyParts.forEach(p -> handlePart(p, command));
     }
 
-    private static void handlePart(FormBodyPart bodyPart, List<List<String>> command) {
+    private void handlePart(FormBodyPart bodyPart, List<List<String>> command) {
         String contentDisposition = bodyPart.getHeader().getFields().stream()
                 .filter(f -> f.getName().equals("Content-Disposition"))
                 .findFirst()
@@ -286,7 +299,7 @@ public class Http2Curl {
         return boundaryPart.split("=")[1];
     }
 
-    private static void handleNotIgnoredHeaders(List<Header> headers, Set<String> ignoredHeaders, List<List<String>> command) {
+    private void handleNotIgnoredHeaders(List<Header> headers, Set<String> ignoredHeaders, List<List<String>> command) {
         headers
                 .stream()
                 .filter(h -> !ignoredHeaders.contains(h.getName()))
@@ -297,7 +310,7 @@ public class Http2Curl {
                 });
     }
 
-    private static List<Header> handleAuthenticationHeader(List<Header> headers, List<List<String>> command) {
+    private List<Header> handleAuthenticationHeader(List<Header> headers, List<List<String>> command) {
         headers.stream()
                 .filter(h -> isBasicAuthentication(h))
                 .forEach(h -> {
@@ -353,14 +366,11 @@ public class Http2Curl {
                 .findFirst();
     }
 
-    private static boolean isOsWindows() {
-        return System.getProperty("os.name") != null && System.getProperty("os.name")
-                .startsWith("Windows");
-    }
 
-    private static String escapeString(String s) {
+
+    private String escapeString(String s) {
         // cURL command is expected to run on the same platform that test run
-        return isOsWindows() ? escapeStringWin(s) : escapeStringPosix(s);
+        return osChecker.isOsWindows() ? escapeStringWin(s) : escapeStringPosix(s);
     }
 
     /**

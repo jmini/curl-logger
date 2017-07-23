@@ -34,17 +34,16 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class UsingWithRestAssuredTest {
+public class UsingWithRestAssuredTest extends AbstractTest {
 
   private static final int MOCK_PORT = 9999;
   private static final String MOCK_HOST = "localhost";
   private static final String MOCK_BASE_URI = "http://" + MOCK_HOST;
   private static final String[] HEADERS_TO_IGNORE = new String[]{"User-Agent", "Connection"};
 
-
   private MockServerClient mockServer;
 
-  private static RestAssuredConfig getRestAssuredConfig(Consumer<String> curlConsumer) {
+  private RestAssuredConfig getRestAssuredConfig(Consumer<String> curlConsumer) {
     return config()
         .httpClient(httpClientConfig()
             .reuseHttpClientInstance().httpClientFactory(new MyHttpClientFactory(curlConsumer)));
@@ -200,12 +199,12 @@ public class UsingWithRestAssuredTest {
         .baseUri(MOCK_BASE_URI)
         .port(MOCK_PORT)
         .config(getRestAssuredConfig(curlConsumer))
-        .multiPart("message", "{ content : \"interesting\" }", "application/json")
+        .multiPart("message", "{content:\"interesting\"}", "application/json")
         .when().post("/");
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:9999/' -F 'message={ content : \"interesting\" };type=application/json' -X POST -H 'Accept: */*' -H 'Host: localhost:9999' --compressed --insecure --verbose");
+        "curl 'http://localhost:9999/' -F 'message={content:\"interesting\"};type=application/json' -X POST -H 'Accept: */*' -H 'Host: localhost:9999' --compressed --insecure --verbose");
 
   }
 
@@ -233,7 +232,7 @@ public class UsingWithRestAssuredTest {
     mockServer.stop();
   }
 
-  private static class MyHttpClientFactory implements HttpClientConfig.HttpClientFactory {
+  private class MyHttpClientFactory implements HttpClientConfig.HttpClientFactory {
 
     public final Consumer<String> curlConsumer;
 
@@ -249,7 +248,7 @@ public class UsingWithRestAssuredTest {
     }
   }
 
-  private static class CurlTestingInterceptor implements HttpRequestInterceptor {
+  private class CurlTestingInterceptor implements HttpRequestInterceptor {
 
     public final Consumer<String> curlConsumer;
 
@@ -261,7 +260,7 @@ public class UsingWithRestAssuredTest {
     public void process(HttpRequest request, HttpContext context)
         throws HttpException, IOException {
       try {
-        curlConsumer.accept(Http2Curl.generateCurl(request, false, new HashSet<>(
+        curlConsumer.accept(getNonWindowsHttp2Curl().generateCurl(request, false, new HashSet<>(
             Arrays.asList(HEADERS_TO_IGNORE))));
       } catch (Exception e) {
         new RuntimeException(e);

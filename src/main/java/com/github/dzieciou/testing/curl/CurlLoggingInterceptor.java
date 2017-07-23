@@ -23,9 +23,10 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
     private Set<String> headersToIgnore = new HashSet<>();
     private boolean logStacktrace = false;
     private boolean printMultiliner = false;
+    private final Http2Curl http2Curl;
 
     private CurlLoggingInterceptor() {
-
+        http2Curl = new Http2Curl();
     }
 
     public static Builder defaultBuilder() {
@@ -42,7 +43,7 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
     @Override
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
         try {
-            String curl = Http2Curl.generateCurl(request, printMultiliner, Collections.unmodifiableSet(headersToIgnore));
+            String curl = http2Curl.generateCurl(request, printMultiliner, Collections.unmodifiableSet(headersToIgnore));
             StringBuffer message = new StringBuffer(curl);
             if (logStacktrace) {
                 message.append(String.format("%n\tgenerated%n"));
