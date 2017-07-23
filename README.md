@@ -1,6 +1,7 @@
 # CURL Logger
 
 [![Build Status](https://travis-ci.org/dzieciou/curl-logger.svg?branch=master)](https://travis-ci.org/dzieciou/curl-logger/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.dzieciou.testing/curl-logger/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.dzieciou.testing/curl-logger)
 
 Logs each HTTP request sent by REST-assured as a [CURL][1] command.
 
@@ -153,7 +154,7 @@ By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prin
 ## Releases
 
 0.6:
-* Fixed bug: For each a separate "-b cookie=value" parameter is generated (https://github.com/dzieciou/curl-logger/issues/4)
+* Fixed bug: For each cookie a separate "-b cookie=value" parameter was generated (https://github.com/dzieciou/curl-logger/issues/4)
 * Upgraded to REST-assured 3.0.2
 * Simplified curl-logger configuration with `CurlLoggingRestAssuredConfigBuilder`, based on suggestion from Tao Zhang (https://github.com/dzieciou/curl-logger/issues/4)
 
@@ -168,7 +169,7 @@ By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prin
 
 0.4:
  
- * Upgraded to REST-assured 3.0
+* Upgraded to REST-assured 3.0
 
 0.3:
 
