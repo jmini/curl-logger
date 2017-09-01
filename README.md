@@ -153,6 +153,9 @@ By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prin
 
 ## Releases
 
+0.7:
+
+
 0.6:
 * Fixed bug: For each cookie a separate "-b cookie=value" parameter was generated (https://github.com/dzieciou/curl-logger/issues/4)
 * Upgraded to REST-assured 3.0.2
