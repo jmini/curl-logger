@@ -39,7 +39,6 @@ public class UsingWithRestAssuredTest extends AbstractTest {
   private static final int MOCK_PORT = 9999;
   private static final String MOCK_HOST = "localhost";
   private static final String MOCK_BASE_URI = "http://" + MOCK_HOST;
-  private static final String[] HEADERS_TO_IGNORE = new String[]{"User-Agent", "Connection"};
 
   private MockServerClient mockServer;
 
@@ -78,8 +77,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT
-        + "/access' -b 'token=tokenValue; context=contextValue' -H 'Accept: */*' -H 'Content-Length: 0' -H 'Host: localhost:"
-        + MOCK_PORT + "' --compressed --insecure --verbose");
+        + "/access' -b 'token=tokenValue; context=contextValue' -H 'Accept: */*' -H 'Content-Length: 0'");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -111,8 +109,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
         + "token1=1-XQLTiKxwRNyUpJYkr+IV2g==-+nLy/6GiMDj7SW/jN107UGmpf4hsM7IXsXdN9z/+7dyljV5N+0Pqpg/da0XIGOgSt2mMIIStakcjGyPlEq30Wx2gvYmVadkmH7gmcSGcaBupjlcKM2Fio96AbzJVjxUUsE5jvjBI8YlyX8fMiesQ8Gbt8XhEGbJKJe4/ogMDn7Qv687DQraxGewISOu5VIQuhgztTDqa2OUCgObG94wtAo3lSo+7HSbxcbM0LNKbbqA=-5GVOIPO4SZ7m8E0DtLS1E76h0LOmzWN00iiIeWZz360=; "
         + "token2=2-XQLTiKxwRNyUpJYkr+IV2g==-+nLy/6GiMDj7SW/jN107UGmpf4hsM7IXsXdN9z/+7dyljV5N+0Pqpg/da0XIGOgSt2mMIIStakcjGyPlEq30Wx2gvYmVadkmH7gmcSGcaBupjlcKM2Fio96AbzJVjxUUsE5jvjBI8YlyX8fMiesQ8Gbt8XhEGbJKJe4/ogMDn7Qv687DQraxGewISOu5VIQuhgztTDqa2OUCgObG94wtAo3lSo+7HSbxcbM0LNKbbqA=-5GVOIPO4SZ7m8E0DtLS1E76h0LOmzWN00iiIeWZz360="
         + "' " +
-        "-H 'Accept: */*' -H 'Content-Length: 0' -H 'Host: localhost:" + MOCK_PORT
-        + "' --compressed --insecure --verbose");
+        "-H 'Accept: */*' -H 'Content-Length: 0'");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -143,8 +140,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT
-        + "/access' -b 'token=tokenValue' -H 'Accept: */*' -H 'Content-Length: 0' -H 'Host: localhost:"
-        + MOCK_PORT + "' --compressed --insecure --verbose");
+        + "/access' -b 'token=tokenValue' -H 'Accept: */*' -H 'Content-Length: 0'");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -164,9 +160,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
         .statusCode(200);
     //@formatter:on
 
-    verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT
-        + "/' -H 'Accept: */*' -H 'Content-Length: 0' -H 'Host: localhost:" + MOCK_PORT
-        + "' --compressed --insecure --verbose");
+    verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT + "/' -H 'Accept: */*' -H 'Content-Length: 0'");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -185,7 +179,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:9999/' -F 'file=@README.md;type=application/octet-stream' -F 'parameterX=parameterXValue;type=text/plain' -X POST -H 'Accept: */*' -H 'Host: localhost:9999' --compressed --insecure --verbose");
+        "curl 'http://localhost:"+MOCK_PORT+"/' -F 'file=@README.md;type=application/octet-stream' -F 'parameterX=parameterXValue;type=text/plain' -X POST -H 'Accept: */*'");
 
   }
 
@@ -204,7 +198,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:9999/' -F 'message={content:\"interesting\"};type=application/json' -X POST -H 'Accept: */*' -H 'Host: localhost:9999' --compressed --insecure --verbose");
+        "curl 'http://localhost:"+MOCK_PORT+"/' -F 'message={content:\"interesting\"};type=application/json' -X POST -H 'Accept: */*'");
 
   }
 
@@ -224,7 +218,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:9999/' -F 'myfile=@README.md;type=application/json' -X POST -H 'Accept: */*' -H 'Host: localhost:9999' -H 'Content-Type: multipart/mixed' --compressed --insecure --verbose");
+        "curl 'http://localhost:"+MOCK_PORT+"/' -F 'myfile=@README.md;type=application/json' -X POST -H 'Accept: */*' -H 'Content-Type: multipart/mixed'");
   }
 
   @AfterClass
@@ -260,8 +254,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     public void process(HttpRequest request, HttpContext context)
         throws HttpException, IOException {
       try {
-        curlConsumer.accept(getNonWindowsHttp2Curl().generateCurl(request, false, new HashSet<>(
-            Arrays.asList(HEADERS_TO_IGNORE))));
+        curlConsumer.accept(getNonWindowsHttp2Curl().generateCurl(request, false, false));
       } catch (Exception e) {
         new RuntimeException(e);
       }

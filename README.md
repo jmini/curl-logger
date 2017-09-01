@@ -17,7 +17,9 @@ given()
 ```
 will be logged as:
 ```
-curl 'http://google.com/' -H 'Accept: */*' -H 'Content-Length: 0' -H 'Host: google.com' -H 'Connection: Keep-Alive' -H 'User-Agent: Apache-HttpClient/4.5.1 (Java/1.8.0_45)' --compressed 
+curl 'http://google.com/' -H 'Accept: */*' -H 'Content-Length: 0'  -H 'Connection: Keep-Alive' 
+  -H 'User-Agent: Apache-HttpClient/4.5.2 (Java/1.8.0_112)' -H 'Content-Type: multipart/mixed' 
+  --compressed --insecure --verbose
 ```
 
 This way testers and developers can quickly reproduce an issue and isolate its root cause. 
@@ -36,7 +38,8 @@ Latest release:
    
 ### Using with REST-assured client 
     
-When sending HTTP Request with REST-assured, you must configure it first as follows:
+When sending HTTP Request with REST-assured, you must create `RestAssuredConfig` instance first
+ as follows:
         
 ```java
 RestAssuredConfig config = new CurlLoggingRestAssuredConfigBuilder().build();  
@@ -77,8 +80,9 @@ using [logback][5]. Sample logback configuration that logs all CURL commands to 
 
 ### Logging stacktrace
 
-If your test is sending multiple requests it might be hard to understand which REST-assured request generated a given 
-curl command. The library provides a way to log stacktrace where the curl generation was requested:
+If your test is sending multiple requests it might be hard to understand which REST-assured request 
+generated a given curl command. The library provides a way to log stacktrace where the curl 
+generation was requested:
 
 ```java  
 new CurlLoggingRestAssuredConfigBuilder()
@@ -106,7 +110,7 @@ curl 'http://somehost.com/uploadFile' -F 'myfile=@README.md;type=application/jso
 
 ### Printing command in multiple lines
 
-For leggibility reasons you may want to print your command in multiple lines:
+For better legibility you may want to print your command in multiple lines:
 ```
 curl 'http://google.pl/' \ 
   -H 'Content-Type: application/x-www-form-urlencoded' \ 
@@ -124,14 +128,45 @@ curl 'http://google.pl/' ^
   --insecure ^ 
   --verbose
 ```
-To achieve this configure your `CurlLoggingInterceptor` as follows:
+To achieve this set up your `RestAssuredConfig` instance as follows:
 ```java
 new CurlLoggingRestAssuredConfigBuilder()
   .printMultiliner()
   .build()
 ```
 
-By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prints curl command in a single line.
+By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prints a curl command in
+ a single line.
+
+### Printing short form of a command
+
+For better legibility you may want to print short version of your command, i.e., skipping common
+headers (`Host`, `Connection`, `User-Name`) and optional curl parameters. For instance, instead 
+of seeing:
+
+```
+curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded'  -H 'Host: google.pl' 
+  -H 'User-Agent: 'User-Agent: Apache-HttpClient/4.5.2 (Java/1.8.0_112)' 
+  -H 'Connection: Keep-Alive' --data 'param1=param1_value&param2=param2_value' --compressed 
+  --insecure --verbose
+```
+you will get:
+
+```
+curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' --data 
+  'param1=param1_value&param2=param2_value'    
+```
+
+To achieve this set up your `RestAssuredConfig` instance as follows:
+```java
+new CurlLoggingRestAssuredConfigBuilder()
+  .useShortForm()
+  .build()
+```
+
+By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prints a curl command
+ in long form.
+
 
 ## Prerequisities
 
@@ -155,6 +190,8 @@ By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prin
 
 0.7:
 
+* Added possibility to print a curl command in short form, based on suggestion from 
+Alexey Dushen (blacky0x0): https://github.com/dzieciou/curl-logger/issues/2.
 
 0.6:
 * Fixed bug: For each cookie a separate "-b cookie=value" parameter was generated (https://github.com/dzieciou/curl-logger/issues/4)

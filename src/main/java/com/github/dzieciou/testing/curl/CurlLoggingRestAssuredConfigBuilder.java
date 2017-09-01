@@ -1,15 +1,12 @@
 package com.github.dzieciou.testing.curl;
 
 
-import java.util.HashSet;
-import java.util.Set;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 /**
  * Builds `RestAssuredConfig` that allows REST-assured to logs each HTTP request as CURL command.
@@ -22,7 +19,10 @@ public class CurlLoggingRestAssuredConfigBuilder {
 
     public CurlLoggingRestAssuredConfigBuilder(RestAssuredConfig config) {
         this.config = config;
-        this.interceptorBuilder = CurlLoggingInterceptor.defaultBuilder();
+        this.interceptorBuilder = CurlLoggingInterceptor.builder()
+            .dontLogStacktrace()
+            .printSingleliner()
+            .useLongForm();
     }
 
     public CurlLoggingRestAssuredConfigBuilder() {
@@ -60,6 +60,16 @@ public class CurlLoggingRestAssuredConfigBuilder {
      */
     public CurlLoggingRestAssuredConfigBuilder printSingleliner() {
         interceptorBuilder.printSingleliner();
+        return this;
+    }
+
+    public CurlLoggingRestAssuredConfigBuilder useShortForm() {
+        interceptorBuilder.useShortForm();
+        return this;
+    }
+
+    public CurlLoggingRestAssuredConfigBuilder useLongForm() {
+        interceptorBuilder.useLongForm();
         return this;
     }
 
