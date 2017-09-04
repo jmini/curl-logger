@@ -32,7 +32,7 @@ Latest release:
 <dependency>
   <groupId>com.github.dzieciou.testing</groupId>
   <artifactId>curl-logger</artifactId>
-  <version>0.6</version>
+  <version>0.7</version>
 </dependency>
 ```
    
