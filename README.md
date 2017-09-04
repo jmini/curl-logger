@@ -215,12 +215,12 @@ server may respond differently after removing "User-Agent" header.
 <dependency>
     <groupId>org.apache.httpcomponents</groupId>
     <artifactId>httpclient</artifactId>
-    <version>4.5.2</version>
+    <version>4.5.3</version>
 </dependency>
 <dependency>
     <groupId>io.restassured</groupId>
     <artifactId>rest-assured</artifactId>
-    <version>3.0.2</version>
+    <version>3.0.3</version>
 </dependency>
 ```
 
