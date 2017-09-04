@@ -70,7 +70,8 @@ public class CurlLoggingInterceptorTest {
     //@formatter:on
 
     // then
-    assertThat(log.getAllLoggingEvents().size(), is(1));
+    System.out.println(log.getLoggingEvents());
+    assertThat(log.getLoggingEvents().size(), is(1));
     LoggingEvent firstEvent = log.getLoggingEvents().get(0);
     assertThat(firstEvent.getLevel(), is(Level.DEBUG));
     assertThat(firstEvent.getMessage(), startsWith("curl"));

@@ -149,7 +149,7 @@ The library enables printing longer form of curl parameters, e.g. "--header" ins
 Options.builder().useLongForm().build();
 ```
 
-Here's more complete example. Instead of generating short forms:
+Here's an example of a curl command generated with parameters in default short form:
 
 ```
 curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' -H 'Host: google.pl' 
@@ -157,7 +157,7 @@ curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' -H
   -H 'Connection: Keep-Alive' -d 'param1=param1_value&param2=param2_value' --compressed -k -v
 ```
 
-it will generate:
+After enabling long form option it would look as follows:
 
 ```
 curl 'http://google.pl/' -header 'Content-Type: application/x-www-form-urlencoded' 
@@ -177,8 +177,8 @@ printing:
 Options.builder().updateCurl(curl -> ...).build();
 ```
 
-`#updateCurl` method takes `Consumer<CurlCommand>` object. `CurlCommand` is a mutable representation
-of curl and offers a number of methods to modify it: `#addHeader`, `#removeHeader`, etc.
+`#updateCurl` method takes instance of `Consumer<CurlCommand>` class. `CurlCommand` is a mutable 
+representation of curl and offers a number of methods to modify it: `#addHeader`, `#removeHeader`, etc.
 
 This is useful to:
 * modify generated curl to test different variations of the same case
