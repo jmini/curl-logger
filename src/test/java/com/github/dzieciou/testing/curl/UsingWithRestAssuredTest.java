@@ -18,8 +18,6 @@ import io.restassured.http.Cookies;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import org.apache.http.HttpException;
@@ -77,7 +75,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT
-        + "/access' -b 'token=tokenValue; context=contextValue' -H 'Accept: */*' -H 'Content-Length: 0'");
+        + "/access' -b 'token=tokenValue; context=contextValue' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -109,7 +107,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
         + "token1=1-XQLTiKxwRNyUpJYkr+IV2g==-+nLy/6GiMDj7SW/jN107UGmpf4hsM7IXsXdN9z/+7dyljV5N+0Pqpg/da0XIGOgSt2mMIIStakcjGyPlEq30Wx2gvYmVadkmH7gmcSGcaBupjlcKM2Fio96AbzJVjxUUsE5jvjBI8YlyX8fMiesQ8Gbt8XhEGbJKJe4/ogMDn7Qv687DQraxGewISOu5VIQuhgztTDqa2OUCgObG94wtAo3lSo+7HSbxcbM0LNKbbqA=-5GVOIPO4SZ7m8E0DtLS1E76h0LOmzWN00iiIeWZz360=; "
         + "token2=2-XQLTiKxwRNyUpJYkr+IV2g==-+nLy/6GiMDj7SW/jN107UGmpf4hsM7IXsXdN9z/+7dyljV5N+0Pqpg/da0XIGOgSt2mMIIStakcjGyPlEq30Wx2gvYmVadkmH7gmcSGcaBupjlcKM2Fio96AbzJVjxUUsE5jvjBI8YlyX8fMiesQ8Gbt8XhEGbJKJe4/ogMDn7Qv687DQraxGewISOu5VIQuhgztTDqa2OUCgObG94wtAo3lSo+7HSbxcbM0LNKbbqA=-5GVOIPO4SZ7m8E0DtLS1E76h0LOmzWN00iiIeWZz360="
         + "' " +
-        "-H 'Accept: */*' -H 'Content-Length: 0'");
+        "-H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -140,7 +138,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT
-        + "/access' -b 'token=tokenValue' -H 'Accept: */*' -H 'Content-Length: 0'");
+        + "/access' -b 'token=tokenValue' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -160,7 +158,8 @@ public class UsingWithRestAssuredTest extends AbstractTest {
         .statusCode(200);
     //@formatter:on
 
-    verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT + "/' -H 'Accept: */*' -H 'Content-Length: 0'");
+    verify(curlConsumer).accept(
+        "curl 'http://localhost:" + MOCK_PORT + "/' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -179,7 +178,8 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:"+MOCK_PORT+"/' -F 'file=@README.md;type=application/octet-stream' -F 'parameterX=parameterXValue;type=text/plain' -X POST -H 'Accept: */*'");
+        "curl 'http://localhost:" + MOCK_PORT
+            + "/' -X POST -H 'Accept: */*' -F 'file=@README.md;type=application/octet-stream' -F 'parameterX=parameterXValue;type=text/plain' --compressed -k -v");
 
   }
 
@@ -198,7 +198,8 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:"+MOCK_PORT+"/' -F 'message={content:\"interesting\"};type=application/json' -X POST -H 'Accept: */*'");
+        "curl 'http://localhost:" + MOCK_PORT
+            + "/' -X POST -H 'Accept: */*' -F 'message={content:\"interesting\"};type=application/json' --compressed -k -v");
 
   }
 
@@ -218,7 +219,8 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:"+MOCK_PORT+"/' -F 'myfile=@README.md;type=application/json' -X POST -H 'Accept: */*' -H 'Content-Type: multipart/mixed'");
+        "curl 'http://localhost:" + MOCK_PORT
+            + "/' -X POST -H 'Accept: */*' -H 'Content-Type: multipart/mixed' -F 'myfile=@README.md;type=application/json' --compressed -k -v");
   }
 
   @AfterClass
@@ -254,7 +256,15 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     public void process(HttpRequest request, HttpContext context)
         throws HttpException, IOException {
       try {
-        curlConsumer.accept(getNonWindowsHttp2Curl().generateCurl(request, false, false));
+
+        curlConsumer.accept(getNonWindowsHttp2Curl().generateCurl(
+            request,
+            false,
+            true,
+            curl -> curl
+                .removeHeader("Host")
+                .removeHeader("User-Agent")
+                .removeHeader("Connection")));
       } catch (Exception e) {
         new RuntimeException(e);
       }

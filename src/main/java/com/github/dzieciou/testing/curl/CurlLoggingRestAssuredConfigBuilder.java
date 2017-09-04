@@ -4,6 +4,7 @@ package com.github.dzieciou.testing.curl;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
+import java.util.function.Consumer;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -22,7 +23,7 @@ public class CurlLoggingRestAssuredConfigBuilder {
         this.interceptorBuilder = CurlLoggingInterceptor.builder()
             .dontLogStacktrace()
             .printSingleliner()
-            .useLongForm();
+            .useShortForm();
     }
 
     public CurlLoggingRestAssuredConfigBuilder() {
@@ -70,6 +71,11 @@ public class CurlLoggingRestAssuredConfigBuilder {
 
     public CurlLoggingRestAssuredConfigBuilder useLongForm() {
         interceptorBuilder.useLongForm();
+        return this;
+    }
+
+    public CurlLoggingRestAssuredConfigBuilder updateCurl(Consumer<CurlCommand> curlUpdater) {
+        interceptorBuilder.updateCurl(curlUpdater);
         return this;
     }
 

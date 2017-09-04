@@ -1,5 +1,6 @@
 package com.github.dzieciou.testing.curl;
 
+import java.util.function.Consumer;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -20,7 +21,8 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
     private boolean logStacktrace;
     private boolean printMultiliner;
     private final Http2Curl http2Curl;
-    private boolean useLongForm;
+    private boolean useShortForm;
+    private Consumer<CurlCommand> curlUpdater;
 
     private CurlLoggingInterceptor() {
         http2Curl = new Http2Curl();
@@ -40,7 +42,7 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
     @Override
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
         try {
-            String curl = http2Curl.generateCurl(request, printMultiliner, useLongForm);
+            String curl = http2Curl.generateCurl(request, printMultiliner, useShortForm, curlUpdater);
             StringBuffer message = new StringBuffer(curl);
             if (logStacktrace) {
                 message.append(String.format("%n\tgenerated%n"));
@@ -89,12 +91,17 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
         }
 
         public Builder useShortForm() {
-            interceptor.useLongForm = false;
+            interceptor.useShortForm = true;
             return this;
         }
 
         public Builder useLongForm() {
-            interceptor.useLongForm = true;
+            interceptor.useShortForm = false;
+            return this;
+        }
+
+        public Builder updateCurl(Consumer<CurlCommand> curlUpdater) {
+            interceptor.curlUpdater = curlUpdater;
             return this;
         }
 

@@ -19,7 +19,7 @@ will be logged as:
 ```
 curl 'http://google.com/' -H 'Accept: */*' -H 'Content-Length: 0'  -H 'Connection: Keep-Alive' 
   -H 'User-Agent: Apache-HttpClient/4.5.2 (Java/1.8.0_112)' -H 'Content-Type: multipart/mixed' 
-  --compressed --insecure --verbose
+  --compressed -k -v
 ```
 
 This way testers and developers can quickly reproduce an issue and isolate its root cause. 
@@ -114,59 +114,97 @@ For better legibility you may want to print your command in multiple lines:
 ```
 curl 'http://google.pl/' \ 
   -H 'Content-Type: application/x-www-form-urlencoded' \ 
-  --data 'param1=param1_value&param2=param2_value' \ 
+  -d 'param1=param1_value&param2=param2_value' \ 
   --compressed \ 
-  --insecure \ 
-  --verbose
+  -k \ 
+  -v
 ```
 or in Windows:
 ```
 curl 'http://google.pl/' ^ 
   -H 'Content-Type: application/x-www-form-urlencoded' ^ 
-  --data 'param1=param1_value&param2=param2_value' ^ 
+  -d 'param1=param1_value&param2=param2_value' ^ 
   --compressed ^ 
-  --insecure ^ 
-  --verbose
+  -k ^ 
+  -v
 ```
 To achieve this set up your `RestAssuredConfig` instance as follows:
 ```java
 new CurlLoggingRestAssuredConfigBuilder()
   .printMultiliner()
-  .build()
+  .build();
 ```
 
 By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prints a curl command in
  a single line.
 
-### Printing short form of a command
+### Printing command parameters in long form
 
-For better legibility you may want to print short version of your command, i.e., skipping common
-headers (`Host`, `Connection`, `User-Name`) and optional curl parameters. For instance, instead 
-of seeing:
+For better legibility you may want to print longer versions of curl parameters. For instance, 
+instead of getting:
 
 ```
-curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded'  -H 'Host: google.pl' 
+curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' -H 'Host: google.pl' 
   -H 'User-Agent: 'User-Agent: Apache-HttpClient/4.5.2 (Java/1.8.0_112)' 
-  -H 'Connection: Keep-Alive' --data 'param1=param1_value&param2=param2_value' --compressed 
-  --insecure --verbose
+  -H 'Connection: Keep-Alive' -d 'param1=param1_value&param2=param2_value' --compressed -k -v
 ```
-you will get:
+
 
 ```
-curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' --data 
-  'param1=param1_value&param2=param2_value'    
+curl 'http://google.pl/' -header 'Content-Type: application/x-www-form-urlencoded' 
+  --header 'Host: google.pl'  --header 'User-Agent: 'User-Agent: Apache-HttpClient/4.5.2 
+     (Java/1.8.0_112)' --header 'Connection: Keep-Alive' 
+  --data 'param1=param1_value&param2=param2_value' --compressed --insecure --verbose
 ```
 
 To achieve this set up your `RestAssuredConfig` instance as follows:
 ```java
 new CurlLoggingRestAssuredConfigBuilder()
-  .useShortForm()
-  .build()
+  .useLongForm()
+  .build();
 ```
 
 By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prints a curl command
- in long form.
+ parameters in short form.
 
+## Updating curl command before print
+
+The library provides a way to modify curl command (add/remove headers, cookies, etc.) before printing.
+
+To example use cases:
+* modify generated curl to test different variations of the same case
+* remove certain headers or paramters to make curl command more consise and thus easier to read
+
+For instance, from the following curl command
+
+```
+curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' -H 'Host: google.pl'  
+  -H 'User-Agent: 'User-Agent: Apache-HttpClient/4.5.2 (Java/1.8.0_112)' 
+  -H 'Connection: Keep-Alive'  -d 'param1=param1_value&param2=param2_value' --compressed -k -v
+```
+
+you may want to skip common header like "Host", "User-Agent" and "Connection":
+
+```
+curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded' 
+  -d 'param1=param1_value&param2=param2_value' --compressed -k -v
+```
+
+To achieve that call `updateCurl()` method when setting up your `RestAssuredConfig` instance. For 
+example:
+
+```java
+new CurlLoggingRestAssuredConfigBuilder()
+  .updateCurl(curl -> curl
+    .removeHeader("Host")
+    .removeHeader("User-Agent")
+    .removeHeader("Connection"))
+  .build();
+```
+
+Note, that the main of goal of the library is to enable reproducing a certain case that 
+occurred. Removing certain headers may trigger a different reaction in a server, for instance
+server may respond differently after removing "User-Agent" header.
 
 ## Prerequisities
 
@@ -190,11 +228,12 @@ By default `CurlLoggingRestAssuredConfigBuilder` creates configuration that prin
 
 0.7:
 
-* Added possibility to print a curl command in short form, based on suggestion from 
+* Added possibility to print shorter versions of curl parameters, e.g., -v instead of --verbose
+* Added possibility to modify a curl command before printing it, inspired by the suggestion from 
 Alexey Dushen (blacky0x0): https://github.com/dzieciou/curl-logger/issues/2.
 
 0.6:
-* Fixed bug: For each cookie a separate "-b cookie=value" parameter was generated (https://github.com/dzieciou/curl-logger/issues/4)
+* Fixed bug: For each cookie a separate "-b cookie=content" parameter was generated (https://github.com/dzieciou/curl-logger/issues/4)
 * Upgraded to REST-assured 3.0.2
 * Simplified curl-logger configuration with `CurlLoggingRestAssuredConfigBuilder`, based on suggestion from Tao Zhang (https://github.com/dzieciou/curl-logger/issues/4)
 

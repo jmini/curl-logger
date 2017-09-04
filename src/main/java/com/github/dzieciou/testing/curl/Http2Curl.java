@@ -38,7 +38,6 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
@@ -46,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -73,10 +73,8 @@ public class Http2Curl {
       "application/x-www-form-urlencoded",
       "application/json"});
 
-  private static final List<String> HEADERS_TO_SKIP_IN_SHORT_FORM = Arrays.asList(new String[]{
-      "Host", "Connection", "User-Agent"});
+  private OsChecker osChecker;
 
-  private final OsChecker osChecker;
 
   public Http2Curl() {
     this(new OsChecker());
@@ -97,7 +95,7 @@ public class Http2Curl {
    * @throws Exception if failed to generate CURL command
    */
   public String generateCurl(HttpRequest request) throws Exception {
-    return generateCurl(request, false, true);
+    return generateCurl(request, false, true, null);
   }
 
   /**
@@ -105,17 +103,19 @@ public class Http2Curl {
    *
    * @param request HTTP request
    * @param printMultiliner {@code true} breaks command into lines for better legibility
-   * @param useLongForm {@code false} skips common headers and parameters
+   * @param useShortForm {@code false} write parameter names in short form
+   * @param curlUpdater updates curl before serializing
    * @return CURL command
    * @throws Exception if failed to generate CURL command
    */
   public String generateCurl(HttpRequest request,
       boolean printMultiliner,
-      boolean useLongForm) throws Exception {
+      boolean useShortForm, Consumer<CurlCommand> curlUpdater) throws Exception {
 
-    List<List<String>> command = new ArrayList<>();  // Multi-line command
     Set<String> ignoredHeaders = new HashSet<>();
     List<Header> headers = Arrays.asList(request.getAllHeaders());
+
+    CurlCommand curl = new CurlCommand(osChecker);
 
     String inferredUri = request.getRequestLine().getUri();
     if (!isValidUrl(inferredUri)) { // Missing schema and domain name
@@ -139,13 +139,9 @@ public class Http2Curl {
       }
     }
 
-    command.add(line(
-        "curl",
-        escapeString(inferredUri).replaceAll("[[{}\\\\]]", "\\$&")));
+    curl.setUrl(inferredUri);
 
     String inferredMethod = "GET";
-    List<String> data = new ArrayList<>();
-
     Optional<String> requestContentType = tryGetHeaderValue(headers, "Content-Type");
     Optional<String> formData = Optional.empty();
     if (request instanceof HttpEntityEnclosingRequest) {
@@ -156,13 +152,13 @@ public class Http2Curl {
           if (requestContentType.get().startsWith("multipart/form")) {
             ignoredHeaders.add("Content-Type"); // let curl command decide
             ignoredHeaders.add("Content-Length");
-            handleMultipartEntity(entity, command);
+            handleMultipartEntity(entity, curl);
           } else if ((requestContentType.get().startsWith("multipart/mixed"))) {
             headers = headers.stream().filter(h -> !h.getName().equals("Content-Type"))
                 .collect(Collectors.toList());
             headers.add(new BasicHeader("Content-Type", "multipart/mixed"));
             ignoredHeaders.add("Content-Length");
-            handleMultipartEntity(entity, command);
+            handleMultipartEntity(entity, curl);
           } else {
             formData = Optional.of(EntityUtils.toString(entity));
           }
@@ -176,60 +172,38 @@ public class Http2Curl {
     if (requestContentType.isPresent()
         && NON_BINARY_CONTENT_TYPES.contains(requestContentType.get())
         && formData.isPresent()) {
-      data.add("--data");
-      data.add(escapeString(formData.get()));
+      curl.addData(formData.get());
       ignoredHeaders.add("Content-Length");
       inferredMethod = "POST";
     } else if (formData.isPresent()) {
-      data.add("--data-binary");
-      data.add(escapeString(formData.get()));
+      curl.addDataBinary(formData.get());
       ignoredHeaders.add("Content-Length");
       inferredMethod = "POST";
     }
 
     if (!request.getRequestLine().getMethod().equals(inferredMethod)) {
-      command.add(line(
-          "-X",
-          request.getRequestLine().getMethod()));
+      curl.setMethod(request.getRequestLine().getMethod());
     }
 
-    headers = handleAuthenticationHeader(headers, command);
+    headers = handleAuthenticationHeader(headers, curl);
 
-    // cookies
-    headers = handleCookieHeaders(command, headers);
+    headers = handleCookieHeaders(curl, headers);
 
-    handleNotIgnoredHeaders(headers, ignoredHeaders, useLongForm, command);
+    handleNotIgnoredHeaders(headers, ignoredHeaders, useShortForm, curl);
 
-    if (!data.isEmpty()) {
-      command.add(data);
+    curl.setCompressed(true);
+    curl.setInsecure(true);
+    curl.setVerbose(true);
+
+    if (curlUpdater != null) {
+      curlUpdater.accept(curl);
     }
 
-    if (useLongForm) {
-      command.add(line("--compressed"));
-      command.add(line("--insecure"));
-      command.add(line("--verbose"));
-    }
+    return curl.asString(printMultiliner, useShortForm);
 
-    return command.stream()
-        .map(line -> line.stream().collect(Collectors.joining(" ")))
-        .collect(Collectors.joining(chooseJoiningString(printMultiliner)));
   }
 
-  private CharSequence chooseJoiningString(boolean printMultiliner) {
-    return printMultiliner
-        ? String.format(" %s%s  ", commandLineSeparator(), osChecker.lineSeparator())
-        : " ";
-  }
-
-  private String commandLineSeparator() {
-    return osChecker.isOsWindows() ? "^" : "\\";
-  }
-
-  private static List<String> line(String... arguments) {
-    return Arrays.asList(arguments);
-  }
-
-  private List<Header> handleCookieHeaders(List<List<String>> command, List<Header> headers) {
+  private List<Header> handleCookieHeaders(CurlCommand curl, List<Header> headers) {
     List<Header> cookiesHeaders = headers.stream()
         .filter(h -> h.getName().equals("Cookie"))
         .collect(Collectors.toList());
@@ -241,9 +215,7 @@ public class Http2Curl {
     }
 
     if (cookiesHeaders.size() == 1) {
-      command.add(line(
-          "-b",
-          escapeString(cookiesHeaders.get(0).getValue())));
+      curl.setCookieHeader(cookiesHeaders.get(0).getValue());
     }
 
     headers = headers.stream().filter(h -> !h.getName().equals("Cookie"))
@@ -251,7 +223,7 @@ public class Http2Curl {
     return headers;
   }
 
-  private void handleMultipartEntity(HttpEntity entity, List<List<String>> command)
+  private void handleMultipartEntity(HttpEntity entity, CurlCommand curl)
       throws NoSuchFieldException, IllegalAccessException, IOException {
     HttpEntity wrappedEntity = (HttpEntity) getFieldValue(entity, "wrappedEntity");
     RestAssuredMultiPartEntity multiPartEntity = (RestAssuredMultiPartEntity) wrappedEntity;
@@ -261,10 +233,10 @@ public class Http2Curl {
     List<FormBodyPart> bodyParts = (List<FormBodyPart>) getFieldValue(multipartEntityBuilder,
         "bodyParts");
 
-    bodyParts.forEach(p -> handlePart(p, command));
+    bodyParts.forEach(p -> handlePart(p, curl));
   }
 
-  private void handlePart(FormBodyPart bodyPart, List<List<String>> command) {
+  private void handlePart(FormBodyPart bodyPart, CurlCommand curl) {
     String contentDisposition = bodyPart.getHeader().getFields().stream()
         .filter(f -> f.getName().equals("Content-Disposition"))
         .findFirst()
@@ -277,21 +249,22 @@ public class Http2Curl {
 
     if (map.containsKey("form-data")) {
 
-      StringBuffer part = new StringBuffer();
-      part.append(removeQuotes(map.get("name"))).append("=");
+      String partName = removeQuotes(map.get("name"));
+
+      StringBuffer partContent = new StringBuffer();
       if (map.get("filename") != null) {
-        part.append("@").append(removeQuotes(map.get("filename")));
+        partContent.append("@").append(removeQuotes(map.get("filename")));
       } else {
         try {
-          part.append(getContent(bodyPart));
+          partContent.append(getContent(bodyPart));
         } catch (IOException e) {
           throw new RuntimeException("Could not read content of the part", e);
         }
       }
-      part.append(";type=" + bodyPart.getHeader().getField("Content-Type").getBody());
-      command.add(line(
-          "-F",
-          escapeString(part.toString())));
+      partContent.append(";type=" + bodyPart.getHeader().getField("Content-Type").getBody());
+
+      curl.addFormPart(partName, partContent.toString());
+
     } else {
       throw new RuntimeException("Unsupported type " + map.entrySet().stream().findFirst().get());
     }
@@ -314,26 +287,22 @@ public class Http2Curl {
   }
 
   private void handleNotIgnoredHeaders(List<Header> headers, Set<String> ignoredHeaders,
-      boolean useLongForm, List<List<String>> command) {
+      boolean useLongForm, CurlCommand curl) {
     headers
         .stream()
-        .filter(h -> !ignoredHeaders.contains(h.getName())
-            && (useLongForm || !HEADERS_TO_SKIP_IN_SHORT_FORM.contains(h.getName())))
-        .forEach(h -> {
-          command.add(line(
-              "-H",
-              escapeString(h.getName() + ": " + h.getValue())));
-        });
+        .filter(h -> !ignoredHeaders.contains(h.getName()))
+        .forEach(h -> curl.addHeader(h.getName(), h.getValue()));
   }
 
-  private List<Header> handleAuthenticationHeader(List<Header> headers,
-      List<List<String>> command) {
+  private List<Header> handleAuthenticationHeader(List<Header> headers, CurlCommand curl) {
     headers.stream()
         .filter(h -> isBasicAuthentication(h))
-        .forEach(h -> {
-          command.add(line(
-              "--user",
-              escapeString(getBasicAuthCredentials(h.getValue()))));
+        .forEach(h ->
+        {
+          String credentials = h.getValue().replaceAll("Basic ", "");
+          String decodedCredentials = new String(Base64.getDecoder().decode(credentials));
+          String[] userAndPassword = decodedCredentials.split(":");
+          curl.setServerAuthentication(userAndPassword[0], userAndPassword[1]);
         });
 
     headers = headers.stream().filter(h -> !isBasicAuthentication(h)).collect(Collectors.toList());
@@ -343,12 +312,6 @@ public class Http2Curl {
   private static boolean isBasicAuthentication(Header h) {
     return h.getName().equals("Authorization") && h.getValue().startsWith("Basic");
   }
-
-  private static String getBasicAuthCredentials(String basicAuth) {
-    String credentials = basicAuth.replaceAll("Basic ", "");
-    return new String(Base64.getDecoder().decode(credentials));
-  }
-
 
   private static String getOriginalRequestUri(HttpRequest request) {
     if (request instanceof HttpRequestWrapper) {
@@ -382,68 +345,6 @@ public class Http2Curl {
         .map(Header::getValue)
         .findFirst();
   }
-
-
-  private String escapeString(String s) {
-    // cURL command is expected to run on the same platform that test run
-    return osChecker.isOsWindows() ? escapeStringWin(s) : escapeStringPosix(s);
-  }
-
-  /**
-   * Replace quote by double quote (but not by \") because it is recognized by both cmd.exe and MS
-   * Crt arguments parser.
-   * <p>
-   * Replace % by "%" because it could be expanded to an environment variable value. So %% becomes
-   * "%""%". Even if an env variable "" (2 doublequotes) is declared, the cmd.exe will not
-   * substitute it with its value.
-   * <p>
-   * Replace each backslash with double backslash to make sure MS Crt arguments parser won't
-   * collapse them.
-   * <p>
-   * Replace new line outside of quotes since cmd.exe doesn't let to do it inside.
-   */
-  private static String escapeStringWin(String s) {
-    return "\""
-        + s
-        .replaceAll("\"", "\"\"")
-        .replaceAll("%", "\"%\"")
-        .replaceAll("\\\\", "\\\\")
-        .replaceAll("[\r\n]+", "\"^$&\"")
-        + "\"";
-  }
-
-  private static String escapeStringPosix(String s) {
-
-    if (s.matches("^.*([^\\x20-\\x7E]|\').*$")) {
-      // Use ANSI-C quoting syntax.
-      String escaped = s
-          .replaceAll("\\\\", "\\\\")
-          .replaceAll("'", "\\'")
-          .replaceAll("\n", "\\n")
-          .replaceAll("\r", "\\r");
-
-      escaped = escaped.chars()
-          .mapToObj(c -> escapeCharacter((char) c))
-          .collect(Collectors.joining());
-
-      return "$\'" + escaped + "'";
-    } else {
-      // Use single quote syntax.
-      return "'" + s + "'";
-    }
-
-  }
-
-  private static String escapeCharacter(char c) {
-    int code = (int) c;
-    String codeAsHex = Integer.toHexString(code);
-    if (code < 256) {
-      // Add leading zero when needed to not care about the next character.
-      return code < 16 ? "\\x0" + codeAsHex : "\\x" + codeAsHex;
-    }
-    return "\\u" + ("" + codeAsHex).substring(codeAsHex.length(), 4);
-  }
-
 
   private static <T> Object getFieldValue(T obj, String fieldName)
       throws NoSuchFieldException, IllegalAccessException {
