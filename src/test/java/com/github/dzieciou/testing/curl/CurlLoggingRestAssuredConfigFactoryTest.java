@@ -31,7 +31,7 @@ public class CurlLoggingRestAssuredConfigFactoryTest {
         .baseUri(MOCK_BASE_URI)
         .port(MOCK_PORT)
         .when()
-        .get("/anypath")
+        .get("/anypath2")
         .then()
         .statusCode(200);
   }
