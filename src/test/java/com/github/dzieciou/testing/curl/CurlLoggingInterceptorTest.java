@@ -54,6 +54,7 @@ public class CurlLoggingInterceptorTest {
 
     // given
     log = TestLoggerFactory.getTestLogger("curl");
+    log.clearAll();
     Options OPTIONS = Options.builder().dontLogStacktrace().build();
     RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(OPTIONS));
 
@@ -83,6 +84,7 @@ public class CurlLoggingInterceptorTest {
 
     // given
     log = TestLoggerFactory.getTestLogger("curl");
+    log.clearAll();
     Options options = Options.builder().logStacktrace().build();
     RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
 
@@ -94,7 +96,7 @@ public class CurlLoggingInterceptorTest {
         .port(MOCK_PORT)
         .config(restAssuredConfig)
         .when()
-        .get("/")
+        .get("/shouldLogStacktraceWhenEnabled")
         .then()
         .statusCode(200);
     //@formatter:on
