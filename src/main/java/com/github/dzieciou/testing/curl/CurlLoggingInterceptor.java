@@ -1,8 +1,6 @@
 package com.github.dzieciou.testing.curl;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.function.Consumer;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -20,16 +18,17 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
 
     private static final Logger log = LoggerFactory.getLogger("curl");
 
-    private Set<String> headersToIgnore = new HashSet<>();
-    private boolean logStacktrace = false;
-    private boolean printMultiliner = false;
+    private boolean logStacktrace;
+    private boolean printMultiliner;
     private final Http2Curl http2Curl;
+    private boolean useShortForm;
+    private Consumer<CurlCommand> curlUpdater;
 
     private CurlLoggingInterceptor() {
         http2Curl = new Http2Curl();
     }
 
-    public static Builder defaultBuilder() {
+    public static Builder builder() {
         return new Builder();
     }
 
@@ -43,7 +42,7 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
     @Override
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
         try {
-            String curl = http2Curl.generateCurl(request, printMultiliner, Collections.unmodifiableSet(headersToIgnore));
+            String curl = http2Curl.generateCurl(request, printMultiliner, useShortForm, curlUpdater);
             StringBuffer message = new StringBuffer(curl);
             if (logStacktrace) {
                 message.append(String.format("%n\tgenerated%n"));
@@ -91,8 +90,18 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
             return this;
         }
 
-        public Builder ignoreHeader(String headerName) {
-            interceptor.headersToIgnore.add(headerName);
+        public Builder useShortForm() {
+            interceptor.useShortForm = true;
+            return this;
+        }
+
+        public Builder useLongForm() {
+            interceptor.useShortForm = false;
+            return this;
+        }
+
+        public Builder updateCurl(Consumer<CurlCommand> curlUpdater) {
+            interceptor.curlUpdater = curlUpdater;
             return this;
         }
 

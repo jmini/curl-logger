@@ -48,7 +48,7 @@ public class CurlLoggingInterceptorTest {
     public void shouldLogDebugMessageWithCurlCommand() {
 
         // given
-        RestAssuredConfig restAssuredConfig = getRestAssuredConfig(CurlLoggingInterceptor.defaultBuilder().build());
+        RestAssuredConfig restAssuredConfig = getRestAssuredConfig(CurlLoggingInterceptor.builder().build());
 
         // when
         //@formatter:off
@@ -74,7 +74,7 @@ public class CurlLoggingInterceptorTest {
     public void shouldLogStacktraceWhenEnabled() {
 
         // given
-        RestAssuredConfig restAssuredConfig = getRestAssuredConfig(CurlLoggingInterceptor.defaultBuilder().logStacktrace().build());
+        RestAssuredConfig restAssuredConfig = getRestAssuredConfig(CurlLoggingInterceptor.builder().logStacktrace().build());
 
         // when
         //@formatter:off
