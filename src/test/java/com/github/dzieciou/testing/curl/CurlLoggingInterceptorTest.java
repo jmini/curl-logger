@@ -33,7 +33,7 @@ public class CurlLoggingInterceptorTest {
   private static final String MOCK_HOST = "localhost";
   private static final String MOCK_BASE_URI = "http://" + MOCK_HOST;
   private MockServerClient mockServer;
-  private final TestLogger log = TestLoggerFactory.getTestLogger("curl");
+  private TestLogger log;
 
   private static RestAssuredConfig getRestAssuredConfig(
       CurlLoggingInterceptor curlLoggingInterceptor) {
@@ -53,6 +53,7 @@ public class CurlLoggingInterceptorTest {
   public void shouldLogDebugMessageWithCurlCommand() {
 
     // given
+    log = TestLoggerFactory.getTestLogger("curl");
     Options OPTIONS = Options.builder().dontLogStacktrace().build();
     RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(OPTIONS));
 
@@ -81,6 +82,7 @@ public class CurlLoggingInterceptorTest {
   public void shouldLogStacktraceWhenEnabled() {
 
     // given
+    log = TestLoggerFactory.getTestLogger("curl");
     Options options = Options.builder().logStacktrace().build();
     RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
 
