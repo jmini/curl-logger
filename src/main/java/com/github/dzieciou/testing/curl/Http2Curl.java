@@ -104,13 +104,14 @@ public class Http2Curl {
    * @param request HTTP request
    * @param printMultiliner {@code true} breaks command into lines for better legibility
    * @param useShortForm {@code false} write parameter names in short form
-   * @param curlUpdater updates curl before serializing
+   * @param curlUpdater updates curl before serializing it
    * @return CURL command
    * @throws Exception if failed to generate CURL command
    */
   public String generateCurl(HttpRequest request,
       boolean printMultiliner,
-      boolean useShortForm, Consumer<CurlCommand> curlUpdater) throws Exception {
+      boolean useShortForm,
+      Consumer<CurlCommand> curlUpdater) throws Exception {
 
     Set<String> ignoredHeaders = new HashSet<>();
     List<Header> headers = Arrays.asList(request.getAllHeaders());
