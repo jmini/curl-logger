@@ -247,7 +247,7 @@ public class UsingWithRestAssuredTest {
     }
   }
 
-  private class CurlTestingInterceptor implements HttpRequestInterceptor {
+  private static class CurlTestingInterceptor implements HttpRequestInterceptor {
 
     public final Consumer<String> curlConsumer;
 
