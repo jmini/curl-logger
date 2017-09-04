@@ -32,7 +32,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class UsingWithRestAssuredTest extends AbstractTest {
+@SuppressWarnings("unchecked")
+public class UsingWithRestAssuredTest {
 
   private static final int MOCK_PORT = 9999;
   private static final String MOCK_HOST = "localhost";
@@ -159,7 +160,8 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:" + MOCK_PORT + "/' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
+        "curl 'http://localhost:" + MOCK_PORT
+            + "/' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -236,6 +238,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
       this.curlConsumer = curlConsumer;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public HttpClient createHttpClient() {
       AbstractHttpClient client = new DefaultHttpClient();
@@ -244,7 +247,7 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     }
   }
 
-  private class CurlTestingInterceptor implements HttpRequestInterceptor {
+  private static class CurlTestingInterceptor implements HttpRequestInterceptor {
 
     public final Consumer<String> curlConsumer;
 
@@ -255,19 +258,24 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     @Override
     public void process(HttpRequest request, HttpContext context)
         throws HttpException, IOException {
-      try {
 
-        curlConsumer.accept(getNonWindowsHttp2Curl().generateCurl(
-            request,
-            false,
-            true,
-            curl -> curl
+
+        Options options = Options.builder()
+            .printSingleliner()
+            .targetPlatform(Platform.UNIX)
+            .useShortForm()
+            .updateCurl(curl -> curl
                 .removeHeader("Host")
                 .removeHeader("User-Agent")
-                .removeHeader("Connection")));
+                .removeHeader("Connection"))
+            .build();
+
+      try {
+        curlConsumer.accept(new Http2Curl(options).generateCurl(request));
       } catch (Exception e) {
-        new RuntimeException(e);
+        throw new RuntimeException(e);
       }
+
     }
   }
 
