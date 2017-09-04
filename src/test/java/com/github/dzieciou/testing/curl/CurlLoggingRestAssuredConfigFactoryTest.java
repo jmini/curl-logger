@@ -25,10 +25,9 @@ public class CurlLoggingRestAssuredConfigFactoryTest {
   }
 
   @Test
-  public void shouldSentRequestWhenUsingConfigurationBuilder() {
+  public void shouldSentRequestWhenUsingConfigurationFactory() {
     RestAssured.given()
-        .config(CurlLoggingRestAssuredConfigFactory
-            .createConfig(Options.builder().logStacktrace().build()))
+        .config(CurlLoggingRestAssuredConfigFactory.createConfig(Options.builder().useShortForm().build()))
         .baseUri(MOCK_BASE_URI)
         .port(MOCK_PORT)
         .when()
