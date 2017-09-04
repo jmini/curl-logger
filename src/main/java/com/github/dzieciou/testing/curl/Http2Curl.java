@@ -64,13 +64,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Generates CURL command for a given HTTP request.
  */
+@SuppressWarnings("deprecation")
 public class Http2Curl {
 
   private static final Logger log = LoggerFactory.getLogger(Http2Curl.class);
 
-  private static final List<String> NON_BINARY_CONTENT_TYPES = Arrays.asList(new String[]{
-      "application/x-www-form-urlencoded",
-      "application/json"});
+  private static final List<String> NON_BINARY_CONTENT_TYPES = Arrays.asList(
+      "application/x-www-form-urlencoded", "application/json");
 
   private final Options options;
 
@@ -89,21 +89,16 @@ public class Http2Curl {
     return s.replaceAll("^\"|\"$", "");
   }
 
-  private static String getBoundary(String contentType) {
-    String boundaryPart = contentType.split(";")[1];
-    return boundaryPart.split("=")[1];
-  }
-
   private static boolean isBasicAuthentication(Header h) {
     return h.getName().equals("Authorization") && h.getValue().startsWith("Basic");
   }
 
+  @SuppressWarnings("deprecation")
   private static String getOriginalRequestUri(HttpRequest request) {
     if (request instanceof HttpRequestWrapper) {
       return ((HttpRequestWrapper) request).getOriginal().getRequestLine().getUri();
     } else if (request instanceof RequestWrapper) {
       return ((RequestWrapper) request).getOriginal().getRequestLine().getUri();
-
     } else {
       throw new IllegalArgumentException("Unsupported request class type: " + request.getClass());
     }
@@ -167,6 +162,7 @@ public class Http2Curl {
         .asString(options.getTargetPlatform(), options.useShortForm(), options.printMultiliner());
   }
 
+  @SuppressWarnings("deprecation")
   private CurlCommand http2curl(HttpRequest request)
       throws NoSuchFieldException, IllegalAccessException, IOException {
     Set<String> ignoredHeaders = new HashSet<>();
@@ -200,24 +196,35 @@ public class Http2Curl {
 
     String inferredMethod = "GET";
     Optional<String> requestContentType = tryGetHeaderValue(headers, "Content-Type");
-    Optional<String> formData = Optional.empty();
+
     if (request instanceof HttpEntityEnclosingRequest) {
       HttpEntityEnclosingRequest requestWithEntity = (HttpEntityEnclosingRequest) request;
       try {
         HttpEntity entity = requestWithEntity.getEntity();
         if (entity != null) {
-          if (requestContentType.get().startsWith("multipart/form")) {
-            ignoredHeaders.add("Content-Type"); // let curl command decide
-            ignoredHeaders.add("Content-Length");
-            handleMultipartEntity(entity, curl);
-          } else if ((requestContentType.get().startsWith("multipart/mixed"))) {
-            headers = headers.stream().filter(h -> !h.getName().equals("Content-Type"))
-                .collect(Collectors.toList());
-            headers.add(new BasicHeader("Content-Type", "multipart/mixed"));
-            ignoredHeaders.add("Content-Length");
-            handleMultipartEntity(entity, curl);
-          } else {
-            formData = Optional.of(EntityUtils.toString(entity));
+          if (requestContentType.isPresent()) {
+            if (requestContentType.get().startsWith("multipart/form")) {
+              ignoredHeaders.add("Content-Type"); // let curl command decide
+              ignoredHeaders.add("Content-Length");
+              handleMultipartEntity(entity, curl);
+            } else if ((requestContentType.get().startsWith("multipart/mixed"))) {
+              headers = headers.stream().filter(h -> !h.getName().equals("Content-Type"))
+                  .collect(Collectors.toList());
+              headers.add(new BasicHeader("Content-Type", "multipart/mixed"));
+              ignoredHeaders.add("Content-Length");
+              handleMultipartEntity(entity, curl);
+            } else {
+              String formData = EntityUtils.toString(entity);
+              if (NON_BINARY_CONTENT_TYPES.contains(requestContentType.get())) {
+                curl.addData(formData);
+                ignoredHeaders.add("Content-Length");
+                inferredMethod = "POST";
+              } else {
+                curl.addDataBinary(formData);
+                ignoredHeaders.add("Content-Length");
+                inferredMethod = "POST";
+              }
+            }
           }
         }
       } catch (IOException e) {
@@ -226,17 +233,7 @@ public class Http2Curl {
       }
     }
 
-    if (requestContentType.isPresent()
-        && NON_BINARY_CONTENT_TYPES.contains(requestContentType.get())
-        && formData.isPresent()) {
-      curl.addData(formData.get());
-      ignoredHeaders.add("Content-Length");
-      inferredMethod = "POST";
-    } else if (formData.isPresent()) {
-      curl.addDataBinary(formData.get());
-      ignoredHeaders.add("Content-Length");
-      inferredMethod = "POST";
-    }
+
 
     if (!request.getRequestLine().getMethod().equals(inferredMethod)) {
       curl.setMethod(request.getRequestLine().getMethod());
@@ -275,12 +272,13 @@ public class Http2Curl {
   }
 
   private void handleMultipartEntity(HttpEntity entity, CurlCommand curl)
-      throws NoSuchFieldException, IllegalAccessException, IOException {
+      throws NoSuchFieldException, IllegalAccessException {
     HttpEntity wrappedEntity = (HttpEntity) getFieldValue(entity, "wrappedEntity");
     RestAssuredMultiPartEntity multiPartEntity = (RestAssuredMultiPartEntity) wrappedEntity;
     MultipartEntityBuilder multipartEntityBuilder = (MultipartEntityBuilder) getFieldValue(
         multiPartEntity, "builder");
 
+    @SuppressWarnings("unchecked")
     List<FormBodyPart> bodyParts = (List<FormBodyPart>) getFieldValue(multipartEntityBuilder,
         "bodyParts");
 
@@ -302,7 +300,7 @@ public class Http2Curl {
 
       String partName = removeQuotes(map.get("name"));
 
-      StringBuffer partContent = new StringBuffer();
+      StringBuilder partContent = new StringBuilder();
       if (map.get("filename") != null) {
         partContent.append("@").append(removeQuotes(map.get("filename")));
       } else {
@@ -312,7 +310,7 @@ public class Http2Curl {
           throw new RuntimeException("Could not read content of the part", e);
         }
       }
-      partContent.append(";type=" + bodyPart.getHeader().getField("Content-Type").getBody());
+      partContent.append(";type=").append(bodyPart.getHeader().getField("Content-Type").getBody());
 
       curl.addFormPart(partName, partContent.toString());
 
@@ -331,7 +329,7 @@ public class Http2Curl {
 
   private List<Header> handleAuthenticationHeader(List<Header> headers, CurlCommand curl) {
     headers.stream()
-        .filter(h -> isBasicAuthentication(h))
+        .filter(Http2Curl::isBasicAuthentication)
         .forEach(h ->
         {
           String credentials = h.getValue().replaceAll("Basic ", "");

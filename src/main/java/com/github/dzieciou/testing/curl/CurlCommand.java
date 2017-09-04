@@ -35,7 +35,6 @@ package com.github.dzieciou.testing.curl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -70,12 +69,7 @@ public class CurlCommand {
   }
 
   public CurlCommand removeHeader(String name) {
-    Iterator<Header> it = headers.iterator();
-    while (it.hasNext()) {
-      if (it.next().name.equals(name)) {
-        it.remove();
-      }
-    }
+    headers.removeIf(header -> header.name.equals(name));
     return this;
   }
 
@@ -197,7 +191,7 @@ public class CurlCommand {
     private final boolean useShortForm;
     private final boolean printMultiliner;
 
-    {
+    static {
       SHORT_PARAMETER_NAMES.put("--user", "-u");
       SHORT_PARAMETER_NAMES.put("--data", "-d");
       SHORT_PARAMETER_NAMES.put("--insecure", "-k");

@@ -13,9 +13,9 @@ import org.testng.annotations.Test;
 
 public class CurlLoggingRestAssuredConfigFactoryTest {
 
-  public static final int MOCK_PORT = 9999;
-  public static final String MOCK_HOST = "localhost";
-  public static final String MOCK_BASE_URI = "http://" + MOCK_HOST;
+  private static final int MOCK_PORT = 9999;
+  private static final String MOCK_HOST = "localhost";
+  private static final String MOCK_BASE_URI = "http://" + MOCK_HOST;
   private MockServerClient mockServer;
 
   @BeforeClass

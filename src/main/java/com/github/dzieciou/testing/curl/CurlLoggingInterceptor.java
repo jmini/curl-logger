@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Logs each HTTP request as CURL command in "curl" log.
  */
-public class CurlLoggingInterceptor implements HttpRequestInterceptor {
+class CurlLoggingInterceptor implements HttpRequestInterceptor {
 
   private static final Logger log = LoggerFactory.getLogger("curl");
 
@@ -28,7 +28,7 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
   private static void printStacktrace(StringBuffer sb) {
     StackTraceElement[] trace = Thread.currentThread().getStackTrace();
     for (StackTraceElement traceElement : trace) {
-      sb.append("\tat " + traceElement + System.lineSeparator());
+      sb.append("\tat ").append(traceElement).append(System.lineSeparator());
     }
   }
 

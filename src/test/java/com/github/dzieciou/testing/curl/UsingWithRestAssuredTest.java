@@ -32,6 +32,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+@SuppressWarnings("unchecked")
 public class UsingWithRestAssuredTest {
 
   private static final int MOCK_PORT = 9999;
@@ -237,6 +238,7 @@ public class UsingWithRestAssuredTest {
       this.curlConsumer = curlConsumer;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public HttpClient createHttpClient() {
       AbstractHttpClient client = new DefaultHttpClient();
@@ -256,7 +258,7 @@ public class UsingWithRestAssuredTest {
     @Override
     public void process(HttpRequest request, HttpContext context)
         throws HttpException, IOException {
-      try {
+
 
         Options options = Options.builder()
             .printSingleliner()
@@ -267,10 +269,13 @@ public class UsingWithRestAssuredTest {
                 .removeHeader("User-Agent")
                 .removeHeader("Connection"))
             .build();
+
+      try {
         curlConsumer.accept(new Http2Curl(options).generateCurl(request));
       } catch (Exception e) {
-        new RuntimeException(e);
+        throw new RuntimeException(e);
       }
+
     }
   }
 

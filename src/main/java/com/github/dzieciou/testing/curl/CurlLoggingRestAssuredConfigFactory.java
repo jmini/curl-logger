@@ -45,7 +45,7 @@ public class CurlLoggingRestAssuredConfigFactory {
 
     @Override
     public HttpClient createHttpClient() {
-      AbstractHttpClient client = new DefaultHttpClient();
+      @SuppressWarnings("deprecation") AbstractHttpClient client = new DefaultHttpClient();
       client.addRequestInterceptor(curlLoggingInterceptor);
       return client;
     }

@@ -29,11 +29,11 @@ import uk.org.lidalia.slf4jtest.TestLoggerFactory;
 
 public class CurlLoggingInterceptorTest {
 
-  public static final int MOCK_PORT = 9999;
-  public static final String MOCK_HOST = "localhost";
-  public static final String MOCK_BASE_URI = "http://" + MOCK_HOST;
+  private static final int MOCK_PORT = 9999;
+  private static final String MOCK_HOST = "localhost";
+  private static final String MOCK_BASE_URI = "http://" + MOCK_HOST;
   private MockServerClient mockServer;
-  private TestLogger log = TestLoggerFactory.getTestLogger("curl");
+  private final TestLogger log = TestLoggerFactory.getTestLogger("curl");
 
   private static RestAssuredConfig getRestAssuredConfig(
       CurlLoggingInterceptor curlLoggingInterceptor) {
@@ -117,7 +117,7 @@ public class CurlLoggingInterceptorTest {
 
   private static class MyHttpClientFactory implements HttpClientConfig.HttpClientFactory {
 
-    private CurlLoggingInterceptor curlLoggingInterceptor;
+    private final CurlLoggingInterceptor curlLoggingInterceptor;
 
     public MyHttpClientFactory(CurlLoggingInterceptor curlLoggingInterceptor) {
       this.curlLoggingInterceptor = curlLoggingInterceptor;
@@ -125,7 +125,7 @@ public class CurlLoggingInterceptorTest {
 
     @Override
     public HttpClient createHttpClient() {
-      AbstractHttpClient client = new DefaultHttpClient();
+      @SuppressWarnings("deprecation") AbstractHttpClient client = new DefaultHttpClient();
       client.addRequestInterceptor(curlLoggingInterceptor);
       return client;
     }
