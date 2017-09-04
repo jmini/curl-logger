@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -73,18 +72,84 @@ public class Http2Curl {
       "application/x-www-form-urlencoded",
       "application/json"});
 
-  private OsChecker osChecker;
+  private final Options options;
 
-
-  public Http2Curl() {
-    this(new OsChecker());
+  public Http2Curl(Options options) {
+    this.options = options;
   }
 
-  /**
-   * For tests only
-   */
-  Http2Curl(OsChecker osChecker) {
-    this.osChecker = osChecker;
+  private static String getContent(FormBodyPart bodyPart) throws IOException {
+    ContentBody content = bodyPart.getBody();
+    ByteArrayOutputStream out = new ByteArrayOutputStream((int) content.getContentLength());
+    content.writeTo(out);
+    return out.toString();
+  }
+
+  private static String removeQuotes(String s) {
+    return s.replaceAll("^\"|\"$", "");
+  }
+
+  private static String getBoundary(String contentType) {
+    String boundaryPart = contentType.split(";")[1];
+    return boundaryPart.split("=")[1];
+  }
+
+  private static boolean isBasicAuthentication(Header h) {
+    return h.getName().equals("Authorization") && h.getValue().startsWith("Basic");
+  }
+
+  private static String getOriginalRequestUri(HttpRequest request) {
+    if (request instanceof HttpRequestWrapper) {
+      return ((HttpRequestWrapper) request).getOriginal().getRequestLine().getUri();
+    } else if (request instanceof RequestWrapper) {
+      return ((RequestWrapper) request).getOriginal().getRequestLine().getUri();
+
+    } else {
+      throw new IllegalArgumentException("Unsupported request class type: " + request.getClass());
+    }
+  }
+
+  private static String getHost(HttpRequest request) {
+    return tryGetHeaderValue(Arrays.asList(request.getAllHeaders()), "Host")
+        .orElseGet(() -> URI.create(getOriginalRequestUri(request)).getHost());
+  }
+
+  private static boolean isValidUrl(String url) {
+    try {
+      new URL(url);
+      return true;
+    } catch (MalformedURLException e) {
+      return false;
+    }
+  }
+
+  private static Optional<String> tryGetHeaderValue(List<Header> headers, String headerName) {
+    return headers
+        .stream()
+        .filter(h -> h.getName().equals(headerName))
+        .map(Header::getValue)
+        .findFirst();
+  }
+
+  private static <T> Object getFieldValue(T obj, String fieldName)
+      throws NoSuchFieldException, IllegalAccessException {
+    Field f = getField(obj.getClass(), fieldName);
+    f.setAccessible(true);
+    return f.get(obj);
+  }
+
+  private static Field getField(Class clazz, String fieldName)
+      throws NoSuchFieldException {
+    try {
+      return clazz.getDeclaredField(fieldName);
+    } catch (NoSuchFieldException e) {
+      Class superClass = clazz.getSuperclass();
+      if (superClass == null) {
+        throw e;
+      } else {
+        return getField(superClass, fieldName);
+      }
+    }
   }
 
   /**
@@ -95,28 +160,19 @@ public class Http2Curl {
    * @throws Exception if failed to generate CURL command
    */
   public String generateCurl(HttpRequest request) throws Exception {
-    return generateCurl(request, false, true, null);
+
+    CurlCommand curl = http2curl(request);
+    options.getCurlUpdater().ifPresent(updater -> updater.accept(curl));
+    return curl
+        .asString(options.getTargetPlatform(), options.useShortForm(), options.printMultiliner());
   }
 
-  /**
-   * Generates CURL command for a given HTTP request.
-   *
-   * @param request HTTP request
-   * @param printMultiliner {@code true} breaks command into lines for better legibility
-   * @param useShortForm {@code false} write parameter names in short form
-   * @param curlUpdater updates curl before serializing it
-   * @return CURL command
-   * @throws Exception if failed to generate CURL command
-   */
-  public String generateCurl(HttpRequest request,
-      boolean printMultiliner,
-      boolean useShortForm,
-      Consumer<CurlCommand> curlUpdater) throws Exception {
-
+  private CurlCommand http2curl(HttpRequest request)
+      throws NoSuchFieldException, IllegalAccessException, IOException {
     Set<String> ignoredHeaders = new HashSet<>();
     List<Header> headers = Arrays.asList(request.getAllHeaders());
 
-    CurlCommand curl = new CurlCommand(osChecker);
+    CurlCommand curl = new CurlCommand();
 
     String inferredUri = request.getRequestLine().getUri();
     if (!isValidUrl(inferredUri)) { // Missing schema and domain name
@@ -190,18 +246,12 @@ public class Http2Curl {
 
     headers = handleCookieHeaders(curl, headers);
 
-    handleNotIgnoredHeaders(headers, ignoredHeaders, useShortForm, curl);
+    handleNotIgnoredHeaders(headers, ignoredHeaders, curl);
 
     curl.setCompressed(true);
     curl.setInsecure(true);
     curl.setVerbose(true);
-
-    if (curlUpdater != null) {
-      curlUpdater.accept(curl);
-    }
-
-    return curl.asString(printMultiliner, useShortForm);
-
+    return curl;
   }
 
   private List<Header> handleCookieHeaders(CurlCommand curl, List<Header> headers) {
@@ -271,24 +321,8 @@ public class Http2Curl {
     }
   }
 
-  private static String getContent(FormBodyPart bodyPart) throws IOException {
-    ContentBody content = bodyPart.getBody();
-    ByteArrayOutputStream out = new ByteArrayOutputStream((int) content.getContentLength());
-    content.writeTo(out);
-    return out.toString();
-  }
-
-  private static String removeQuotes(String s) {
-    return s.replaceAll("^\"|\"$", "");
-  }
-
-  private static String getBoundary(String contentType) {
-    String boundaryPart = contentType.split(";")[1];
-    return boundaryPart.split("=")[1];
-  }
-
   private void handleNotIgnoredHeaders(List<Header> headers, Set<String> ignoredHeaders,
-      boolean useLongForm, CurlCommand curl) {
+      CurlCommand curl) {
     headers
         .stream()
         .filter(h -> !ignoredHeaders.contains(h.getName()))
@@ -308,65 +342,6 @@ public class Http2Curl {
 
     headers = headers.stream().filter(h -> !isBasicAuthentication(h)).collect(Collectors.toList());
     return headers;
-  }
-
-  private static boolean isBasicAuthentication(Header h) {
-    return h.getName().equals("Authorization") && h.getValue().startsWith("Basic");
-  }
-
-  private static String getOriginalRequestUri(HttpRequest request) {
-    if (request instanceof HttpRequestWrapper) {
-      return ((HttpRequestWrapper) request).getOriginal().getRequestLine().getUri();
-    } else if (request instanceof RequestWrapper) {
-      return ((RequestWrapper) request).getOriginal().getRequestLine().getUri();
-
-    } else {
-      throw new IllegalArgumentException("Unsupported request class type: " + request.getClass());
-    }
-  }
-
-  private static String getHost(HttpRequest request) {
-    return tryGetHeaderValue(Arrays.asList(request.getAllHeaders()), "Host")
-        .orElseGet(() -> URI.create(getOriginalRequestUri(request)).getHost());
-  }
-
-  private static boolean isValidUrl(String url) {
-    try {
-      new URL(url);
-      return true;
-    } catch (MalformedURLException e) {
-      return false;
-    }
-  }
-
-  private static Optional<String> tryGetHeaderValue(List<Header> headers, String headerName) {
-    return headers
-        .stream()
-        .filter(h -> h.getName().equals(headerName))
-        .map(Header::getValue)
-        .findFirst();
-  }
-
-  private static <T> Object getFieldValue(T obj, String fieldName)
-      throws NoSuchFieldException, IllegalAccessException {
-    Field f = getField(obj.getClass(), fieldName);
-    f.setAccessible(true);
-    return f.get(obj);
-  }
-
-
-  private static Field getField(Class clazz, String fieldName)
-      throws NoSuchFieldException {
-    try {
-      return clazz.getDeclaredField(fieldName);
-    } catch (NoSuchFieldException e) {
-      Class superClass = clazz.getSuperclass();
-      if (superClass == null) {
-        throw e;
-      } else {
-        return getField(superClass, fieldName);
-      }
-    }
   }
 
 }

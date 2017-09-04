@@ -32,7 +32,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class UsingWithRestAssuredTest extends AbstractTest {
+public class UsingWithRestAssuredTest {
 
   private static final int MOCK_PORT = 9999;
   private static final String MOCK_HOST = "localhost";
@@ -159,7 +159,8 @@ public class UsingWithRestAssuredTest extends AbstractTest {
     //@formatter:on
 
     verify(curlConsumer).accept(
-        "curl 'http://localhost:" + MOCK_PORT + "/' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
+        "curl 'http://localhost:" + MOCK_PORT
+            + "/' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -257,14 +258,16 @@ public class UsingWithRestAssuredTest extends AbstractTest {
         throws HttpException, IOException {
       try {
 
-        curlConsumer.accept(getNonWindowsHttp2Curl().generateCurl(
-            request,
-            false,
-            true,
-            curl -> curl
+        Options options = Options.builder()
+            .printSingleliner()
+            .targetPlatform(Platform.UNIX)
+            .useShortForm()
+            .updateCurl(curl -> curl
                 .removeHeader("Host")
                 .removeHeader("User-Agent")
-                .removeHeader("Connection")));
+                .removeHeader("Connection"))
+            .build();
+        curlConsumer.accept(new Http2Curl(options).generateCurl(request));
       } catch (Exception e) {
         new RuntimeException(e);
       }
