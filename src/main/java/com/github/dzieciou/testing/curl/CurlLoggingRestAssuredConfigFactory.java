@@ -54,7 +54,7 @@ public class CurlLoggingRestAssuredConfigFactory {
   public static RestAssuredConfig updateConfig(RestAssuredConfig config, Options options) {
     HttpClientConfig.HttpClientFactory originalFactory = getHttpClientFactory(config);
     return config
-        .httpClient(HttpClientConfig.httpClientConfig()
+        .httpClient(config.getHttpClientConfig()
             .reuseHttpClientInstance()
             .httpClientFactory(new MyHttpClientFactory(originalFactory, new CurlLoggingInterceptor(options))));
   }
@@ -94,7 +94,7 @@ public class CurlLoggingRestAssuredConfigFactory {
     @Override
     @SuppressWarnings("deprecation")
     public HttpClient createHttpClient() {
-      AbstractHttpClient client = (AbstractHttpClient) wrappedFactory.createHttpClient();
+      final AbstractHttpClient client = (AbstractHttpClient) wrappedFactory.createHttpClient();
       client.addRequestInterceptor(curlLoggingInterceptor);
       return client;
     }

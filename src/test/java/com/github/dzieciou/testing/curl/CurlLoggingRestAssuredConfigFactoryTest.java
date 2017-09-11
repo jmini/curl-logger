@@ -1,16 +1,21 @@
 package com.github.dzieciou.testing.curl;
 
 
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.mockserver.client.server.MockServerClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
@@ -47,23 +52,38 @@ public class CurlLoggingRestAssuredConfigFactoryTest {
   @Test
   public void shouldIncludeCurlInterceptorWhenUpdatingExistingConfig() {
 
-    final RestAssuredConfig config = RestAssuredConfig.config()
-        .httpClient(HttpClientConfig.httpClientConfig().httpClientFactory(
+    HttpClientConfig httpClientConfig = HttpClientConfig.httpClientConfig()
+        .setParam("TestParam", "TestValue")
+        .httpClientFactory(
             new HttpClientConfig.HttpClientFactory() {
               @Override
               public HttpClient createHttpClient() {
-                return new DefaultHttpClient();
+                DefaultHttpClient client = new DefaultHttpClient();
+                client.addRequestInterceptor(new MyRequestInerceptor());
+                return client;
               }
             }
-        ));
+        );
+    final RestAssuredConfig config = RestAssuredConfig.config()
+        .httpClient(httpClientConfig);
 
     RestAssuredConfig updatedConfig = CurlLoggingRestAssuredConfigFactory.updateConfig(config, Options.builder().build());
 
+    // original configuration has not been modified
     assertThat(updatedConfig, not(equalTo(config)));
     AbstractHttpClient clientConfig = (AbstractHttpClient) config.getHttpClientConfig().httpClientInstance();
     assertThat(clientConfig, not(new ContainsRequestInterceptor(CurlLoggingInterceptor.class)));
+    assertThat(clientConfig, new ContainsRequestInterceptor(MyRequestInerceptor.class));
+    assertThat(updatedConfig.getHttpClientConfig().params().get("TestParam"), equalTo("TestValue"));
+
+    // curl logging interceptor is included
     AbstractHttpClient updateClientConfig = (AbstractHttpClient) updatedConfig.getHttpClientConfig().httpClientInstance();
     assertThat(updateClientConfig, new ContainsRequestInterceptor(CurlLoggingInterceptor.class));
+
+    // original interceptors are preserved in new configuration
+    assertThat(updateClientConfig, new ContainsRequestInterceptor(MyRequestInerceptor.class));
+    // original parameters are preserved in new configuration
+    assertThat(updatedConfig.getHttpClientConfig().params().get("TestParam"), equalTo("TestValue"));
 
   }
 
@@ -110,5 +130,12 @@ public class CurlLoggingRestAssuredConfigFactoryTest {
     }
   }
 
+  private static class MyRequestInerceptor implements HttpRequestInterceptor {
+
+    @Override
+    public void process(HttpRequest httpRequest, HttpContext httpContext) throws HttpException, IOException {
+
+    }
+  }
 
 }
