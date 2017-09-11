@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Logs each HTTP request as CURL command in "curl" log.
  */
-class CurlLoggingInterceptor implements HttpRequestInterceptor {
+public class CurlLoggingInterceptor implements HttpRequestInterceptor {
 
   private static final Logger log = LoggerFactory.getLogger("curl");
 
