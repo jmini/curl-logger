@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/dzieciou/curl-logger.svg?branch=master)](https://travis-ci.org/dzieciou/curl-logger/)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.dzieciou.testing/curl-logger/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.dzieciou.testing/curl-logger)
 
-Logs each HTTP request sent by [REST-assured][9] as a [CURL][1] command.
+Logs HTTP requests sent by [REST-assured][9] as [CURL][1] commands.
 
 The following request from REST-assured test
 ```java  
@@ -42,7 +42,7 @@ When sending HTTP Request with REST-assured, you must create `RestAssuredConfig`
  as follows:
         
 ```java
-RestAssuredConfig config = CurlLoggingRestAssuredConfigFactory.createConfig());  
+RestAssuredConfig config = CurlLoggingRestAssuredConfigFactory.createConfig();  
 ```
   
 and then use it:
@@ -57,18 +57,18 @@ If you already have a `RestAssuredConfig` instance, you may reconfigure it as fo
 
 ```java
 RestAssuredConfig config = ...;
-config = CurlLoggingRestAssuredConfigFactory.updateConfig(config));  
+config = CurlLoggingRestAssuredConfigFactory.updateConfig(config);  
 ```
 
 The library provides a number of options for the way curl is generated and logged. They can be
 defined with `Options` class. For instance:
  
 ```java
-Options options = ...;
-RestAssuredConfig config = CurlLoggingRestAssuredConfigFactory.createConfig(options));  
+Options options = Options.builder()...build();
+RestAssuredConfig config = CurlLoggingRestAssuredConfigFactory.createConfig(options);  
 ```
 
-There is a separating section listing all options.
+There is a separate section listing all options.
  
 ### Configuring logger 
 
