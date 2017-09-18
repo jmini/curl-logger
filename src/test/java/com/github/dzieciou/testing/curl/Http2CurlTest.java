@@ -74,6 +74,16 @@ public class Http2CurlTest {
   }
 
   @Test
+  public void shouldPrintMultipleCookieHeadersInMultipleParameters() throws Exception {
+    HttpHead headRequest = new HttpHead("http://test.com/items/12345");
+    headRequest.addHeader("Cookie", "X=Y; A=B");
+    headRequest.addHeader("Cookie", "D=E");
+    assertThat(getNonWindowsHttp2Curl().generateCurl(headRequest),
+        equalTo("curl 'http://test.com/items/12345' -X HEAD -H 'Cookie: X=Y; A=B' -H 'Cookie: D=E' --compressed -k -v"));
+  }
+
+
+  @Test
   public void shouldPrintPutRequestProperly() throws Exception {
     HttpPut putRequest = new HttpPut("http://test.com/items/12345");
     putRequest.setEntity(new StringEntity("details={\"name\":\"myname\",\"age\":\"20\"}"));
