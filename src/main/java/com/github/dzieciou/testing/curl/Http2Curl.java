@@ -233,15 +233,24 @@ public class Http2Curl {
       }
     }
 
-
-
     if (!request.getRequestLine().getMethod().equals(inferredMethod)) {
       curl.setMethod(request.getRequestLine().getMethod());
     }
 
     headers = handleAuthenticationHeader(headers, curl);
 
-    headers = handleCookieHeaders(curl, headers);
+    List<Header> cookiesHeaders = headers.stream()
+        .filter(h -> h.getName().equals("Cookie"))
+        .collect(Collectors.toList());
+    if (cookiesHeaders.size() == 1) {
+      curl.setCookieHeader(cookiesHeaders.get(0).getValue());
+      headers = headers.stream().filter(h -> !h.getName().equals("Cookie"))
+          .collect(Collectors.toList());
+    } else if (cookiesHeaders.size() > 1) {
+      // RFC 6265: When the user agent generates an HTTP request, the user agent MUST NOT attach
+      // more than one Cookie header field.
+      log.warn("More than one Cookie header in HTTP Request not allowed by RFC 6265");
+    }
 
     handleNotIgnoredHeaders(headers, ignoredHeaders, curl);
 
@@ -249,26 +258,6 @@ public class Http2Curl {
     curl.setInsecure(true);
     curl.setVerbose(true);
     return curl;
-  }
-
-  private List<Header> handleCookieHeaders(CurlCommand curl, List<Header> headers) {
-    List<Header> cookiesHeaders = headers.stream()
-        .filter(h -> h.getName().equals("Cookie"))
-        .collect(Collectors.toList());
-
-    if (cookiesHeaders.size() > 1) {
-      // RFC 6265: When the user agent generates an HTTP request, the user agent MUST NOT attach
-      // more than one Cookie header field.
-      throw new IllegalStateException("More than one Cookie header in HTTP Request not allowed");
-    }
-
-    if (cookiesHeaders.size() == 1) {
-      curl.setCookieHeader(cookiesHeaders.get(0).getValue());
-    }
-
-    headers = headers.stream().filter(h -> !h.getName().equals("Cookie"))
-        .collect(Collectors.toList());
-    return headers;
   }
 
   private void handleMultipartEntity(HttpEntity entity, CurlCommand curl)

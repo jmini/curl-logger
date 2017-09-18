@@ -32,7 +32,7 @@ Latest release:
 <dependency>
   <groupId>com.github.dzieciou.testing</groupId>
   <artifactId>curl-logger</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
    
@@ -247,6 +247,9 @@ curl 'http://somehost.com/uploadFile' -F 'myfile=@README.md;type=application/jso
 ```
 
 ## Releases
+
+1.0.1:
+* Bug fix: `CurlLoggingRestAssuredConfigBuilder` was not updating `RestAssuredConfig` properly (https://github.com/dzieciou/curl-logger/issues/4): 
 
 1.0.0:
 
