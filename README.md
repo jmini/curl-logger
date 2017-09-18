@@ -32,7 +32,7 @@ Latest release:
 <dependency>
   <groupId>com.github.dzieciou.testing</groupId>
   <artifactId>curl-logger</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
 </dependency>
 ```
    
@@ -248,15 +248,20 @@ curl 'http://somehost.com/uploadFile' -F 'myfile=@README.md;type=application/jso
 
 ## Releases
 
+1.0.2:
+* Bug fix: CurlLogger was failing when multiple Cookie headers are present in HTTP Request. Now it
+only prints warning (https://github.com/dzieciou/curl-logger/issues/13)
+
 1.0.1:
-* Bug fix: `CurlLoggingRestAssuredConfigBuilder` was not updating `RestAssuredConfig` properly (https://github.com/dzieciou/curl-logger/issues/4): 
+* Bug fix: `CurlLoggingRestAssuredConfigBuilder` was not updating `RestAssuredConfig` properly 
+(https://github.com/dzieciou/curl-logger/issues/4): 
 
 1.0.0:
 
 * First major release with stable public API
 * Provided a way to force target platform of generated curl command
-* Backward-incompatible change: `CurlLoggingRestAssuredConfigBuilder` replaced with `CurlLoggingRestAssuredConfigFactory` that uses
-`Options` class to configure curl generation process.
+* Backward-incompatible change: `CurlLoggingRestAssuredConfigBuilder` replaced with 
+`CurlLoggingRestAssuredConfigFactory` that uses `Options` class to configure curl generation process.
 
 0.7:
 
