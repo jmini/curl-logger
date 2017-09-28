@@ -248,6 +248,10 @@ curl 'http://somehost.com/uploadFile' -F 'myfile=@README.md;type=application/jso
 
 ## Releases
 
+1.0.3:
+* Bug fix: Invalid basic authentication headers are failing curl generation 
+(https://github.com/dzieciou/curl-logger/issues/15)
+
 1.0.2:
 * Bug fix: CurlLogger was failing when multiple Cookie headers are present in HTTP Request. Now it
 only prints warning (https://github.com/dzieciou/curl-logger/issues/13)
