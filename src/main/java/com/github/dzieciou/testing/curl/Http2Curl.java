@@ -31,21 +31,6 @@
 
 package com.github.dzieciou.testing.curl;
 
-import io.restassured.internal.multipart.RestAssuredMultiPartEntity;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -59,6 +44,25 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import io.restassured.internal.multipart.RestAssuredMultiPartEntity;
 
 
 /**
@@ -309,7 +313,7 @@ public class Http2Curl {
   }
 
   private void handleNotIgnoredHeaders(List<Header> headers, Set<String> ignoredHeaders,
-      CurlCommand curl) {
+                                       CurlCommand curl) {
     headers
         .stream()
         .filter(h -> !ignoredHeaders.contains(h.getName()))
@@ -317,18 +321,26 @@ public class Http2Curl {
   }
 
   private List<Header> handleAuthenticationHeader(List<Header> headers, CurlCommand curl) {
-    headers.stream()
-        .filter(Http2Curl::isBasicAuthentication)
-        .forEach(h ->
-        {
+
+    List<Header> remainingHeaders = new ArrayList<>(headers);
+    Iterator<Header> it = remainingHeaders.iterator();
+    while (it.hasNext()) {
+      Header h = it.next();
+      if (isBasicAuthentication(h)) {
+        try {
           String credentials = h.getValue().replaceAll("Basic ", "");
           String decodedCredentials = new String(Base64.getDecoder().decode(credentials));
-          String[] userAndPassword = decodedCredentials.split(":");
+          String[] userAndPassword = decodedCredentials.split(":", -1);
           curl.setServerAuthentication(userAndPassword[0], userAndPassword[1]);
-        });
-
-    headers = headers.stream().filter(h -> !isBasicAuthentication(h)).collect(Collectors.toList());
-    return headers;
+          it.remove();
+          break; // There can be only one authentication headers
+        } catch (IllegalArgumentException | IndexOutOfBoundsException e) {
+          log.warn("This is not valid Basic authentication header: {}", h.getValue());
+        }
+      }
+    }
+    return remainingHeaders;
   }
+
 
 }
