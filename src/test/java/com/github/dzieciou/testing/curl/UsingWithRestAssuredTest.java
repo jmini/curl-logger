@@ -27,7 +27,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
-import org.mockserver.client.server.MockServerClient;
+import org.mockserver.client.MockServerClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -76,7 +76,7 @@ public class UsingWithRestAssuredTest {
     //@formatter:on
 
     verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT
-        + "/access' -b 'token=tokenValue; context=contextValue' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
+        + "/access' -b 'token=tokenValue; context=contextValue' -H 'Accept: */*' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -108,7 +108,7 @@ public class UsingWithRestAssuredTest {
         + "token1=1-XQLTiKxwRNyUpJYkr+IV2g==-+nLy/6GiMDj7SW/jN107UGmpf4hsM7IXsXdN9z/+7dyljV5N+0Pqpg/da0XIGOgSt2mMIIStakcjGyPlEq30Wx2gvYmVadkmH7gmcSGcaBupjlcKM2Fio96AbzJVjxUUsE5jvjBI8YlyX8fMiesQ8Gbt8XhEGbJKJe4/ogMDn7Qv687DQraxGewISOu5VIQuhgztTDqa2OUCgObG94wtAo3lSo+7HSbxcbM0LNKbbqA=-5GVOIPO4SZ7m8E0DtLS1E76h0LOmzWN00iiIeWZz360=; "
         + "token2=2-XQLTiKxwRNyUpJYkr+IV2g==-+nLy/6GiMDj7SW/jN107UGmpf4hsM7IXsXdN9z/+7dyljV5N+0Pqpg/da0XIGOgSt2mMIIStakcjGyPlEq30Wx2gvYmVadkmH7gmcSGcaBupjlcKM2Fio96AbzJVjxUUsE5jvjBI8YlyX8fMiesQ8Gbt8XhEGbJKJe4/ogMDn7Qv687DQraxGewISOu5VIQuhgztTDqa2OUCgObG94wtAo3lSo+7HSbxcbM0LNKbbqA=-5GVOIPO4SZ7m8E0DtLS1E76h0LOmzWN00iiIeWZz360="
         + "' " +
-        "-H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
+        "-H 'Accept: */*' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -139,7 +139,7 @@ public class UsingWithRestAssuredTest {
     //@formatter:on
 
     verify(curlConsumer).accept("curl 'http://localhost:" + MOCK_PORT
-        + "/access' -b 'token=tokenValue' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
+        + "/access' -b 'token=tokenValue' -H 'Accept: */*' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")
@@ -161,7 +161,7 @@ public class UsingWithRestAssuredTest {
 
     verify(curlConsumer).accept(
         "curl 'http://localhost:" + MOCK_PORT
-            + "/' -H 'Accept: */*' -H 'Content-Length: 0' --compressed -k -v");
+            + "/' -H 'Accept: */*' --compressed -k -v");
   }
 
   @Test(groups = "end-to-end-samples")

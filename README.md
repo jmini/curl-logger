@@ -32,7 +32,7 @@ Latest release:
 <dependency>
   <groupId>com.github.dzieciou.testing</groupId>
   <artifactId>curl-logger</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.4-SNAPSHOT</version>
 </dependency>
 ```
    
@@ -242,11 +242,15 @@ curl 'http://somehost.com/uploadFile' -F 'myfile=@README.md;type=application/jso
 <dependency>
     <groupId>io.restassured</groupId>
     <artifactId>rest-assured</artifactId>
-    <version>3.0.3</version>
+    <version>3.2.0</version>
 </dependency>
 ```
 
 ## Releases
+
+1.0.4:
+* Support slf4j 1.8.0-beta2.
+* Support rest-assured 3.2.0. 
 
 1.0.3:
 * Bug fix: Invalid basic authentication headers are failing curl generation 
