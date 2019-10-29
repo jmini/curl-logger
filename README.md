@@ -32,7 +32,7 @@ Latest release:
 <dependency>
   <groupId>com.github.dzieciou.testing</groupId>
   <artifactId>curl-logger</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
 </dependency>
 ```
    
@@ -306,6 +306,12 @@ given()
 ```
 
 ## Releases
+
+1.0.5:
+* Upgrade to REST-assured 4.0.0.
+* Update test scope dependencies.
+* Fix character escaping for both POSIX and Windows platforms (many thanks to Chirag008 for rausung
+the issue: https://github.com/dzieciou/curl-logger/issues/25)
 
 1.0.4:
 * Bug fix: HTTPS protocol was not always recognized correctly 
