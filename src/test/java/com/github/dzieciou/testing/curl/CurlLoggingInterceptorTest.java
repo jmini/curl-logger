@@ -109,6 +109,148 @@ public class CurlLoggingInterceptorTest {
         .and(containsString(("java.lang.Thread.getStackTrace"))));
   }
 
+  @Test
+  public void shouldLogAtErrorLevel() {
+
+      // given
+      log = TestLoggerFactory.getTestLogger("curl");
+      log.clearAll();
+      Options options = Options.builder().logLevel(org.slf4j.event.Level.ERROR).build();
+      RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
+
+      // when
+      //@formatter:off
+      given()
+      .redirects().follow(false)
+      .baseUri(MOCK_BASE_URI)
+      .port(MOCK_PORT)
+      .config(restAssuredConfig)
+      .when()
+      .get("/shouldLogStacktraceWhenEnabled")
+      .then()
+      .statusCode(200);
+      //@formatter:on
+
+      // then
+      assertThat(log.getAllLoggingEvents().size(), is(1));
+      LoggingEvent firstEvent = log.getLoggingEvents().get(0);
+      assertThat(firstEvent.getLevel(), is(Level.ERROR));
+      assertThat(firstEvent.getMessage(), startsWith("curl"));
+  }
+
+  @Test
+  public void shouldLogAtInfoLevel() {
+
+      // given
+      log = TestLoggerFactory.getTestLogger("curl");
+      log.clearAll();
+      Options options = Options.builder().logLevel(org.slf4j.event.Level.INFO).build();
+      RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
+
+      // when
+      //@formatter:off
+      given()
+      .redirects().follow(false)
+      .baseUri(MOCK_BASE_URI)
+      .port(MOCK_PORT)
+      .config(restAssuredConfig)
+      .when()
+      .get("/shouldLogStacktraceWhenEnabled")
+      .then()
+      .statusCode(200);
+      //@formatter:on
+
+      // then
+      assertThat(log.getAllLoggingEvents().size(), is(1));
+      LoggingEvent firstEvent = log.getLoggingEvents().get(0);
+      assertThat(firstEvent.getLevel(), is(Level.INFO));
+      assertThat(firstEvent.getMessage(), startsWith("curl"));
+  }
+
+  @Test
+  public void shouldLogAtTraceLevel() {
+
+      // given
+      log = TestLoggerFactory.getTestLogger("curl");
+      log.clearAll();
+      Options options = Options.builder().logLevel(org.slf4j.event.Level.TRACE).build();
+      RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
+
+      // when
+      //@formatter:off
+      given()
+      .redirects().follow(false)
+      .baseUri(MOCK_BASE_URI)
+      .port(MOCK_PORT)
+      .config(restAssuredConfig)
+      .when()
+      .get("/shouldLogStacktraceWhenEnabled")
+      .then()
+      .statusCode(200);
+      //@formatter:on
+
+      // then
+      assertThat(log.getAllLoggingEvents().size(), is(1));
+      LoggingEvent firstEvent = log.getLoggingEvents().get(0);
+      assertThat(firstEvent.getLevel(), is(Level.TRACE));
+      assertThat(firstEvent.getMessage(), startsWith("curl"));
+  }
+
+  @Test
+  public void shouldLogAtWarnLevel() {
+
+      // given
+      log = TestLoggerFactory.getTestLogger("curl");
+      log.clearAll();
+      Options options = Options.builder().logLevel(org.slf4j.event.Level.WARN).build();
+      RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
+
+      // when
+      //@formatter:off
+      given()
+      .redirects().follow(false)
+      .baseUri(MOCK_BASE_URI)
+      .port(MOCK_PORT)
+      .config(restAssuredConfig)
+      .when()
+      .get("/shouldLogStacktraceWhenEnabled")
+      .then()
+      .statusCode(200);
+      //@formatter:on
+
+      // then
+      assertThat(log.getAllLoggingEvents().size(), is(1));
+      LoggingEvent firstEvent = log.getLoggingEvents().get(0);
+      assertThat(firstEvent.getLevel(), is(Level.WARN));
+      assertThat(firstEvent.getMessage(), startsWith("curl"));
+  }
+
+  @Test
+  public void shouldNotLog() {
+
+      // given
+      log = TestLoggerFactory.getTestLogger("curl");
+      log.clearAll();
+      Options options = Options.builder().logLevel(null).build();
+      RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
+
+      // when
+      //@formatter:off
+      given()
+      .redirects().follow(false)
+      .baseUri(MOCK_BASE_URI)
+      .port(MOCK_PORT)
+      .config(restAssuredConfig)
+      .when()
+      .get("/shouldLogStacktraceWhenEnabled")
+      .then()
+      .statusCode(200);
+      //@formatter:on
+
+      // then
+      assertThat(log.getAllLoggingEvents().size(), is(0));
+  }
+
   @AfterMethod
   public void clearLoggers() {
     log.clearAll();

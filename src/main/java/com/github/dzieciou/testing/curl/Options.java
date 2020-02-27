@@ -1,12 +1,15 @@
 package com.github.dzieciou.testing.curl;
 
 
+import org.slf4j.event.Level;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class Options {
 
   private boolean logStacktrace;
+  private Level logLevel = Level.DEBUG;
   private boolean printMultiliner;
   private boolean useShortForm;
   private Consumer<CurlCommand> curlUpdater;
@@ -22,6 +25,10 @@ public class Options {
 
   public boolean canLogStacktrace() {
     return logStacktrace;
+  }
+
+  public Level getLogLevel() {
+    return logLevel;
   }
 
   public boolean printMultiliner() {
@@ -61,6 +68,14 @@ public class Options {
      */
     public Builder dontLogStacktrace() {
       options.logStacktrace = false;
+      return this;
+    }
+
+    /**
+     * Configure the level at which the generated curl statement should be logged. <code>null</code> means no logging.
+     */
+    public Builder logLevel(Level level) {
+      options.logLevel = level;
       return this;
     }
 

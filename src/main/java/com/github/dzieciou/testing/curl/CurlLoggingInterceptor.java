@@ -41,7 +41,27 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
         message.append(String.format("%n\tgenerated%n"));
         printStacktrace(message);
       }
-      log.debug(message.toString());
+      if (options.getLogLevel() != null) {
+        switch (options.getLogLevel()) {
+          case DEBUG:
+            log.debug(message.toString());
+            break;
+          case ERROR:
+            log.error(message.toString());
+            break;
+          case INFO:
+            log.info(message.toString());
+            break;
+          case TRACE:
+            log.trace(message.toString());
+            break;
+          case WARN:
+            log.warn(message.toString());
+            break;
+          default:
+            throw new IllegalStateException("Unknown log level: " + options.getLogLevel());
+        }
+      }
     } catch (Exception e) {
       log.warn("Failed to generate CURL command for HTTP request", e);
     }
