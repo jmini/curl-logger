@@ -266,6 +266,18 @@ curl 'http://google.pl/' -H 'Content-Type: application/x-www-form-urlencoded'
   --data-binary 'param1=param1_value&param2=param2_value' --compressed -k -v
 ```
 
+### Capture curl command
+
+The library provides a way to capture curl commands that will be logged.
+This can be useful if the test suite execution log is not the place where the curl commands needs to be stored.
+
+Just register as many `Consumer<String>` as you would like.
+Their `accept()` method will be called each time a log command is generated. 
+
+```java
+List<String> list = new ArrayList<>(); //The consumer is the list add() method (curl commands are stored in this list)
+Options.builder().addConsumer(list::add).build();
+```
 
 
 ## Other features

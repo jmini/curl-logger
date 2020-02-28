@@ -3,6 +3,8 @@ package com.github.dzieciou.testing.curl;
 
 import org.slf4j.event.Level;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -15,6 +17,7 @@ public class Options {
   private Consumer<CurlCommand> curlUpdater;
   private Platform targetPlatform = Platform.RECOGNIZE_AUTOMATICALLY;
   private boolean escapeNonAscii;
+  private List<Consumer<String>> consumers = new ArrayList<Consumer<String>>();
 
   private Options() {
   }
@@ -49,6 +52,10 @@ public class Options {
 
   public Platform getTargetPlatform() {
     return targetPlatform;
+  }
+
+  public List<Consumer<String>> getConsumers() {
+    return consumers;
   }
 
   public static class Builder {
@@ -142,6 +149,14 @@ public class Options {
      */
     public Builder dontEscapeNonAscii() {
       options.escapeNonAscii = false;
+      return this;
+    }
+
+    /**
+     * Add a consumer to receive created curl command.
+     */
+    public Builder addConsumer(Consumer<String> consumer) {
+      options.consumers.add(consumer);
       return this;
     }
 

@@ -1,6 +1,7 @@
 package com.github.dzieciou.testing.curl;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -41,22 +42,26 @@ public class CurlLoggingInterceptor implements HttpRequestInterceptor {
         message.append(String.format("%n\tgenerated%n"));
         printStacktrace(message);
       }
+      String m = message.toString();
+      for (Consumer<String> consumer : options.getConsumers()) {
+        consumer.accept(m);
+      }
       if (options.getLogLevel() != null) {
         switch (options.getLogLevel()) {
           case DEBUG:
-            log.debug(message.toString());
+            log.debug(m);
             break;
           case ERROR:
-            log.error(message.toString());
+            log.error(m);
             break;
           case INFO:
-            log.info(message.toString());
+            log.info(m);
             break;
           case TRACE:
-            log.trace(message.toString());
+            log.trace(m);
             break;
           case WARN:
-            log.warn(message.toString());
+            log.warn(m);
             break;
           default:
             throw new IllegalStateException("Unknown log level: " + options.getLogLevel());

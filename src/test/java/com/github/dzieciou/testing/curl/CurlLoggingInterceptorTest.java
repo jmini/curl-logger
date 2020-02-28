@@ -17,6 +17,8 @@ import com.github.valfirst.slf4jtest.TestLogger;
 import com.github.valfirst.slf4jtest.TestLoggerFactory;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -251,9 +253,38 @@ public class CurlLoggingInterceptorTest {
       assertThat(log.getAllLoggingEvents().size(), is(0));
   }
 
+
+  @Test
+  public void shouldAddToConsumer() {
+
+      // given
+      List<String> list = new ArrayList<>();
+      Options options = Options.builder().addConsumer(list::add).build();
+      RestAssuredConfig restAssuredConfig = getRestAssuredConfig(new CurlLoggingInterceptor(options));
+
+      // when
+      //@formatter:off
+      given()
+      .redirects().follow(false)
+      .baseUri(MOCK_BASE_URI)
+      .port(MOCK_PORT)
+      .config(restAssuredConfig)
+      .when()
+      .get("/shouldLogStacktraceWhenEnabled")
+      .then()
+      .statusCode(200);
+      //@formatter:on
+
+      // then
+      assertThat(list.size(), is(1));
+      assertThat(list.get(0), startsWith("curl"));
+  }
+
   @AfterMethod
   public void clearLoggers() {
-    log.clearAll();
+    if (log != null) {
+      log.clearAll();
+    }
     TestLoggerFactory.clear();
   }
 
